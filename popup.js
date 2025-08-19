@@ -28,31 +28,8 @@ class ExtensionApp {
   setupEventListeners() {
     console.log('Setting up event listeners');
     
-    // Authentication
-    document.getElementById('auth-button').addEventListener('click', () => this.authenticate());
+    // Authentication - Personal Access Token only
     document.getElementById('manual-auth-button').addEventListener('click', () => this.authenticateWithManualToken());
-    
-    // Manual token toggle buttons
-    const showManualBtn = document.getElementById('show-manual-token-btn');
-    const backToOAuthBtn = document.getElementById('back-to-oauth-btn');
-    
-    if (showManualBtn) {
-      showManualBtn.addEventListener('click', () => {
-        console.log('Show manual token button clicked');
-        this.toggleManualTokenSection();
-      });
-    } else {
-      console.error('show-manual-token-btn not found');
-    }
-    
-    if (backToOAuthBtn) {
-      backToOAuthBtn.addEventListener('click', () => {
-        console.log('Back to OAuth button clicked');
-        this.toggleManualTokenSection();
-      });
-    } else {
-      console.error('back-to-oauth-btn not found');
-    }
     
     // Repository screen
     document.getElementById('repo-back-btn').addEventListener('click', () => this.showScreen('auth'));
@@ -125,89 +102,6 @@ class ExtensionApp {
     }
   }
 
-  async authenticate() {
-    return this.authenticateWithOAuth();
-  }
-
-  toggleManualTokenSection() {
-    console.log('Toggling manual token section');
-    
-    const authOptions = document.getElementById('auth-options');
-    const manualTokenSection = document.querySelector('.manual-token-section');
-    const errorDiv = document.getElementById('auth-error');
-    
-    console.log('Auth options element:', authOptions);
-    console.log('Manual token section element:', manualTokenSection);
-    
-    if (!authOptions || !manualTokenSection) {
-      console.error('Required elements not found for toggle');
-      return;
-    }
-    
-    // Toggle visibility of both sections
-    authOptions.classList.toggle('hidden');
-    manualTokenSection.classList.toggle('hidden');
-    
-    console.log('Auth options hidden:', authOptions.classList.contains('hidden'));
-    console.log('Manual token section hidden:', manualTokenSection.classList.contains('hidden'));
-    
-    // Clear any existing errors
-    errorDiv.classList.add('hidden');
-    
-    // If showing manual token section, focus on the input
-    if (!manualTokenSection.classList.contains('hidden')) {
-      const tokenInput = document.getElementById('manual-token');
-      if (tokenInput) {
-        setTimeout(() => {
-          tokenInput.focus();
-          console.log('Focused on token input');
-        }, 100);
-      }
-    } else {
-      // Clear the token input when going back
-      const tokenInput = document.getElementById('manual-token');
-      if (tokenInput) {
-        tokenInput.value = '';
-      }
-    }
-  }
-
-  async authenticateWithOAuth() {
-    const authButton = document.getElementById('auth-button');
-    const errorDiv = document.getElementById('auth-error');
-    
-    authButton.disabled = true;
-    authButton.innerHTML = `
-      <div class="spinner spinner--light"></div>
-      Signing in...
-    `;
-    errorDiv.classList.add('hidden');
-    
-    try {
-      const response = await this.sendMessage({ action: 'authenticate' });
-      
-      if (response.success) {
-        this.githubToken = response.token;
-        this.showScreen('repo');
-        this.loadRepositories();
-      } else {
-        throw new Error(response.error || 'Authentication failed');
-      }
-    } catch (error) {
-      console.error('Authentication error:', error);
-      errorDiv.textContent = error.message;
-      errorDiv.classList.remove('hidden');
-    } finally {
-      authButton.disabled = false;
-      authButton.innerHTML = `
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-        </svg>
-        Sign in with GitHub
-      `;
-    }
-  }
-
   async authenticateWithManualToken() {
     console.log('Starting manual token authentication');
     
@@ -275,9 +169,9 @@ class ExtensionApp {
       authButton.disabled = false;
       authButton.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                        </svg>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
         Authenticate
       `;
     }

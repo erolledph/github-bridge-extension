@@ -8,10 +8,6 @@
     "storage",
     "activeTab"
   ],
-  "host_permissions": [
-    "https://api.github.com/*",
-    "https://github.com/*"
-  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -23,10 +19,6 @@
       "48": "assets/icon48.png",
       "128": "assets/icon128.png"
     }
-  },
-  "oauth2": {
-    "client_id": "Ov23liQGVLjKJhJGJhJG",
-    "scopes": ["repo", "user:email"]
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"

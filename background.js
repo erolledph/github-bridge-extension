@@ -238,104 +238,11 @@ class GitHubService {
   }
 }
 
-// Authentication functions
-async function authenticateWithGitHub() {
-  const redirectURL = chrome.identity.getRedirectURL();
-  const clientId = 'Ov23liQGVLjKJhJGJhJG'; // Replace with your actual client ID
-  const authURL = `https://github.com/login/oauth/authorize?` +
-    `client_id=${clientId}&` +
-    `redirect_uri=${encodeURIComponent(redirectURL)}&` +
-    `scope=repo user:email&` +
-    `response_type=code`;
-
-  return new Promise((resolve, reject) => {
-    chrome.identity.launchWebAuthFlow({
-      url: authURL,
-      interactive: true
-    }, async (responseUrl) => {
-      if (chrome.runtime.lastError) {
-        reject(chrome.runtime.lastError);
-        return;
-      }
-
-      if (!responseUrl) {
-        reject(new Error('No response URL received'));
-        return;
-      }
-
-      try {
-        const url = new URL(responseUrl);
-        const code = url.searchParams.get('code');
-        
-        if (!code) {
-          reject(new Error('No authorization code received'));
-          return;
-        }
-
-        // Exchange code for token
-        const token = await exchangeCodeForToken(code);
-        
-        // Store token
-        await chrome.storage.local.set({ github_token: token });
-        
-        resolve(token);
-      } catch (error) {
-        reject(error);
-      }
-    });
-  });
-}
-
-async function exchangeCodeForToken(code) {
-  // In a real implementation, you would need a backend service to exchange the code
-  // For now, we'll simulate this or use a public proxy service
-  // This is a simplified version - in production, you need proper token exchange
-  
-  try {
-    const response = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        client_id: 'Ov23liQGVLjKJhJGJhJG',
-        client_secret: 'your_client_secret', // This should be handled by your backend
-        code: code
-      })
-    });
-
-    const data = await response.json();
-    
-    if (data.access_token) {
-      return data.access_token;
-    } else {
-      throw new Error('Failed to get access token');
-    }
-  } catch (error) {
-    console.error('Token exchange failed:', error);
-    throw error;
-  }
-}
-
 // Message handling
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('Background received message:', request);
 
   switch (request.action) {
-    case 'authenticate':
-      console.log('Processing authenticate request');
-      authenticateWithGitHub()
-        .then(token => {
-          console.log('Authentication successful, token received');
-          sendResponse({ success: true, token });
-        })
-        .catch(error => {
-          console.error('Authentication failed:', error);
-          sendResponse({ success: false, error: error.message });
-        });
-      return true; // Keep message channel open for async response
-
     case 'getStoredToken':
       console.log('Processing getStoredToken request');
       chrome.storage.local.get(['github_token'], (result) => {
