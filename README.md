@@ -1,2 +1,1 @@
-# github-bridge-extension
-bolt to github
+# gh-pages

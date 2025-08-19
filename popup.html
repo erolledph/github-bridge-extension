@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Bridge</title>
+    <link rel="stylesheet" href="styles/popup.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <img src="assets/icon48.svg" alt="GitHub Bridge" class="logo">
+                <div class="header-text">
+                    <h1>GitHub Bridge</h1>
+                    <p>Upload to GitHub</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="screen">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+        </div>
+
+        <!-- Authentication Screen -->
+        <div id="auth-screen" class="screen hidden">
+            <div class="auth-content">
+                <div class="auth-icon">
+                    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512" xml:space="preserve"
+                        fill="#6efb32" stroke="#6efb32">
+                        <g id="SVGRepo_bgCarrier" stroke-width="0" />
+                        <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round" />
+                        <g id="SVGRepo_iconCarrier">
+                            <path style="fill:#16a34a;"
+                                d="M196.594,512c-1.716,0-3.45-0.313-5.119-0.96c-5.85-2.273-9.504-8.13-8.971-14.384l14.522-170.571 H48.049c-4.648,0-8.999-2.283-11.64-6.108c-2.641-3.825-3.235-8.702-1.588-13.049L147.627,9.135C149.71,3.637,154.976,0,160.854,0 h232.583c4.743,0,9.167,2.376,11.788,6.328c2.621,3.952,3.088,8.955,1.242,13.321l-49.4,116.91h106.884 c5.391,0,10.311,3.064,12.692,7.9s1.803,10.606-1.485,14.876l-48.819,63.388c-4.767,6.191-13.648,7.341-19.837,2.576 c-6.19-4.767-7.343-13.648-2.576-19.837l31.278-40.612h-99.471c-4.743,0-9.167-2.376-11.788-6.328s-3.088-8.955-1.242-13.321 l49.402-116.912H170.623L68.532,297.794h143.894c3.961,0,7.739,1.661,10.418,4.576c2.679,2.917,4.013,6.822,3.676,10.768 l-11.743,137.929l121.963-158.363c4.768-6.19,13.648-7.341,19.837-2.576c6.19,4.767,7.342,13.648,2.576,19.837L207.803,506.485 C205.066,510.04,200.889,512,196.594,512z" />
+                            <polygon style="fill:#16a34a;"
+                                points="274.026,255.36 129.983,255.36 199.925,70.724 307.059,70.724 249.356,207.284 346.772,207.284 259.542,338.02 " />
+                            <path style="fill:#16a34a;"
+                                d="M259.538,352.166c-1.76,0-3.54-0.328-5.255-1.016c-6.21-2.487-9.828-8.983-8.674-15.572 l11.579-66.073H129.985c-4.648,0-8.999-2.283-11.64-6.108c-2.641-3.825-3.235-8.702-1.588-13.048l69.94-184.636 c2.082-5.498,7.348-9.135,13.228-9.135H307.06c4.743,0,9.167,2.376,11.788,6.328c2.621,3.952,3.088,8.955,1.241,13.321l-49.4,116.91 h76.084c5.217,0,10.012,2.873,12.471,7.473c2.461,4.6,2.19,10.183-0.706,14.522l-87.232,130.737 C268.618,349.899,264.153,352.166,259.538,352.166z M150.466,241.215h123.56c4.178,0,8.143,1.847,10.831,5.047 c2.686,3.2,3.822,7.425,3.101,11.539l-2.886,16.47l35.259-52.843h-70.974c-4.743,0-9.169-2.376-11.788-6.328 c-2.62-3.952-3.086-8.955-1.24-13.321l49.399-116.91h-76.035L150.466,241.215z" />
+                        </g>
+                    </svg>
+                </div>
+                <h2>GitHub Authentication</h2>
+                <p>Connect your GitHub account to upload projects</p>
+
+                <div id="auth-options" class="auth-options">
+                    <button id="auth-button" class="btn-primary" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                        </svg>
+                        Sign in with GitHub
+                    </button>
+
+                    <div class="auth-divider">
+                        <span>or</span>
+                    </div>
+
+                    <button id="show-manual-token-btn" class="btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        Use Personal Access Token
+                    </button>
+                </div>
+
+                <div id="manual-token-section" class="manual-token-section hidden">
+                    <div class="form-group">
+                        <label for="manual-token">GitHub Personal Access Token</label>
+                        <input type="password" id="manual-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                            class="token-input">
+                        <small class="token-hint">
+                            Create a token at
+                            <a href="https://github.com/settings/tokens" target="_blank" class="token-link">
+                                github.com
+                            </a>
+                        </small>
+                    </div>
+                    <div class="token-actions">
+                        <button id="back-to-oauth-btn" class="btn-secondary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M19 12H5" />
+                                <path d="M12 19l-7-7 7-7" />
+                            </svg>
+                            Back
+                        </button>
+                        <button id="manual-auth-button" class="btn-primary">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            Authenticate
+                        </button>
+                    </div>
+                </div>
+
+                <div id="auth-error" class="error-message hidden"></div>
+            </div>
+        </div>
+
+        <!-- Repository Selection Screen -->
+        <div id="repo-screen" class="screen hidden">
+            <div class="repo-content">
+                <div class="screen-header">
+                    <button id="repo-back-btn" class="btn-back">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 12H5" />
+                            <path d="M12 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div>
+                        <h2>Select Repository</h2>
+                        <p>Choose where to upload your project</p>
+                    </div>
+                </div>
+
+                <div class="search-section">
+                    <div class="search-box">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="M21 21l-4.35-4.35" />
+                        </svg>
+                        <input type="text" id="repo-search" placeholder="Search repositories...">
+                    </div>
+                    <button id="create-repo-btn" class="btn-secondary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 5v14" />
+                            <path d="M5 12h14" />
+                        </svg>
+                        Create New
+                    </button>
+                </div>
+
+                <!-- Create Repository Form -->
+                <div id="create-repo-form" class="create-form hidden">
+                    <h3>Create New Repository</h3>
+                    <div class="form-group">
+                        <label for="repo-name">Repository Name *</label>
+                        <input type="text" id="repo-name" placeholder="my-awesome-project" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="repo-description">Description (Optional)</label>
+                        <textarea id="repo-description" placeholder="A brief description..." rows="2"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="repo-private">
+                            <span class="checkmark"></span>
+                            Make repository private
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button id="cancel-create-btn" class="btn-secondary">Cancel</button>
+                        <button id="confirm-create-btn" class="btn-primary">Create Repository</button>
+                    </div>
+                    <div id="create-error" class="error-message hidden"></div>
+                </div>
+
+                <div id="repo-list" class="repo-list">
+                    <div class="loading-repos">
+                        <div class="spinner"></div>
+                        <p>Loading repositories...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload Screen -->
+        <div id="upload-screen" class="screen hidden">
+            <div class="upload-content">
+                <div class="screen-header">
+                    <button id="upload-back-btn" class="btn-back">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 12H5" />
+                            <path d="M12 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div>
+                        <h2>Upload Project Files</h2>
+                        <p>Upload your Bolt.new exported ZIP file</p>
+                    </div>
+                </div>
+
+                <div id="drop-zone" class="drop-zone">
+                    <input type="file" id="file-input" accept=".zip" hidden>
+                    <div class="drop-content">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7,10 12,15 17,10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        <h3>Drop your ZIP file here</h3>
+                        <p>or <button id="browse-btn" class="link-btn">click to browse</button></p>
+                        <small>Supports ZIP files exported from Bolt.new</small>
+                    </div>
+                </div>
+
+                <div id="file-preview" class="file-preview hidden">
+                    <h3>File Preview</h3>
+                    <div id="file-info" class="file-info"></div>
+                    <div id="file-list" class="file-list"></div>
+                    <button id="continue-upload-btn" class="btn-primary">Continue</button>
+                </div>
+
+                <div id="upload-error" class="error-message hidden"></div>
+            </div>
+        </div>
+
+        <!-- Commit Screen -->
+        <div id="commit-screen" class="screen hidden">
+            <div class="commit-content">
+                <div class="screen-header">
+                    <button id="commit-back-btn" class="btn-back">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 12H5" />
+                            <path d="M12 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div>
+                        <h2>Commit & Push</h2>
+                        <p>Configure your commit settings</p>
+                    </div>
+                </div>
+
+                <div id="repo-info" class="repo-info"></div>
+
+                <div class="form-group">
+                    <label for="commit-message">Commit Message</label>
+                    <textarea id="commit-message" rows="3" placeholder="Describe your changes..."></textarea>
+                    <small class="char-count">0/72 characters (recommended)</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="branch-select">Target Branch</label>
+                        <select id="branch-select">
+                            <option value="">Loading branches...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="clear-existing">
+                            <span class="checkmark"></span>
+                            Clear existing files
+                        </label>
+                    </div>
+                </div>
+
+                <!-- File Changes Summary -->
+                <div class="file-changes-summary">
+                    <h3>File Changes Summary</h3>
+                    <div id="file-changes-list" class="file-changes-container">
+                        <div class="loading-changes">
+                            <div class="spinner"></div>
+                            <p>Analyzing file changes...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="clear-warning" class="warning-message hidden">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                    </svg>
+                    <div>
+                        <strong>Warning: This will remove all existing files</strong>
+                        <p>All files in the repository will be deleted and replaced with your uploaded files.</p>
+                    </div>
+                </div>
+
+                <div id="upload-progress" class="upload-progress hidden">
+                    <div class="progress-info">
+                        <span>Uploading files...</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div id="progress-fill" class="progress-fill"></div>
+                    </div>
+                </div>
+
+                <div id="commit-error" class="error-message hidden"></div>
+
+                <button id="push-btn" class="btn-primary">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22,2 15,22 11,13 2,9 22,2" />
+                    </svg>
+                    Push to Repository
+                </button>
+            </div>
+        </div>
+
+        <!-- Success Screen -->
+        <div id="success-screen" class="screen hidden">
+            <div class="success-content">
+                <div class="success-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                        <polyline points="22,4 12,14.01 9,11.01" />
+                    </svg>
+                </div>
+                <h2>Upload Successful!</h2>
+                <p id="success-message">Your project has been successfully uploaded</p>
+                <div class="success-actions">
+                    <button id="view-github-btn" class="btn-primary">View on GitHub</button>
+                    <button id="start-over-btn" class="btn-secondary">Upload Another</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+    <script src="lib/jszip.min.js"></script>
+</body>
+<footer>
+    <p>Try GitHub Bridge in your browser: <a href="https://github-bridge.netlify.app" id="external-link">Click here</a></p>
+</footer>
+</html>
