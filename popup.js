@@ -663,7 +663,11 @@ class ExtensionApp {
               ? uploadedFile.content 
               : new TextDecoder().decode(uploadedFile.content);
             
-            if (existingContent === uploadedContent) {
+            // Normalize line endings for accurate comparison
+            const normalizedExistingContent = existingContent.replace(/\r\n/g, '\n');
+            const normalizedUploadedContent = uploadedContent.replace(/\r\n/g, '\n');
+            
+            if (normalizedExistingContent === normalizedUploadedContent) {
               changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
             } else {
               changes.modified.push({ path, file: uploadedFile, status: 'modified' });

@@ -103,9 +103,19 @@ class GitHubService {
   async getBlobContent(owner, repo, sha) {
     try {
       const blob = await this.makeRequest(`/repos/${owner}/${repo}/git/blobs/${sha}`);
-      // Decode base64 content
-      const content = blob.encoding === 'base64' ? atob(blob.content) : blob.content;
-      return content;
+      // Decode base64 content using TextDecoder for proper UTF-8 handling
+      if (blob.encoding === 'base64') {
+        // Convert base64 to Uint8Array, then decode as UTF-8
+        const binaryString = atob(blob.content);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        const decoder = new TextDecoder('utf-8');
+        return decoder.decode(bytes);
+      } else {
+        return blob.content;
+      }
     } catch (error) {
       console.error('Failed to fetch blob content:', error);
       throw new Error(`Failed to fetch blob content: ${error.message}`);
