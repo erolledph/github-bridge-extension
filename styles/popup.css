@@ -786,7 +786,8 @@ margin: 20px;
 
 .loading-repos,
 .empty-state,
-.error-state {
+.error-state,
+.no-changes-state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -795,6 +796,37 @@ margin: 20px;
   text-align: center;
   color: var(--color-text-secondary);
   gap: var(--space-3);
+}
+
+/* No Changes State */
+.no-changes-state {
+  padding: var(--space-12) var(--space-6);
+}
+
+.no-changes-icon {
+  width: var(--space-16);
+  height: var(--space-16);
+  background: var(--color-success-bg);
+  border-radius: var(--radius-2xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-success);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-md);
+}
+
+.no-changes-state h3 {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.no-changes-state p {
+  color: var(--color-text-secondary);
+  text-align: center;
+  line-height: var(--line-height-relaxed);
+  max-width: 300px;
 }
 
 /* Upload Screen */

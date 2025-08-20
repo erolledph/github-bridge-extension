@@ -408,18 +408,25 @@ class ExtensionApp {
           if (!finalPath) continue;
           
           try {
-            const content = await zipEntry.async('string');
+            // Always get content as Uint8Array for consistent SHA calculation
+            const content = await zipEntry.async('uint8array');
+            const sha = await this.calculateSha1(content);
+            
             extractedFiles.push({
               path: finalPath,
               content: content,
-              isDirectory: false
+              isDirectory: false,
+              sha: sha
             });
           } catch {
             const content = await zipEntry.async('uint8array');
+            const sha = await this.calculateSha1(content);
+            
             extractedFiles.push({
               path: finalPath,
               content: content,
-              isDirectory: false
+              isDirectory: false,
+              sha: sha
             });
           }
         }
@@ -468,6 +475,28 @@ class ExtensionApp {
     }
   }
 
+  async calculateSha1(content) {
+    // Ensure content is a Uint8Array
+    let uint8Array;
+    if (content instanceof Uint8Array) {
+      uint8Array = content;
+    } else if (typeof content === 'string') {
+      uint8Array = new TextEncoder().encode(content);
+    } else if (content instanceof ArrayBuffer) {
+      uint8Array = new Uint8Array(content);
+    } else {
+      throw new Error('Unsupported content type for SHA-1 calculation');
+    }
+    
+    // Calculate SHA-1 hash using Web Crypto API
+    const hashBuffer = await crypto.subtle.digest('SHA-1', uint8Array);
+    const hashArray = new Uint8Array(hashBuffer);
+    
+    // Convert to hexadecimal string
+    return Array.from(hashArray)
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('');
+  }
   showFilePreview() {
     const preview = document.getElementById('file-preview');
     const fileInfo = document.getElementById('file-info');
@@ -567,6 +596,9 @@ class ExtensionApp {
     // Load branches
     await this.loadBranches();
     
+    // Update push button state initially
+    this.updatePushButtonState();
+    
     // Analyze file changes
     await this.analyzeFileChanges();
   }
@@ -648,33 +680,11 @@ class ExtensionApp {
       } else {
         // File exists, check if modified
         const existingFile = existingFiles.get(path);
-        try {
-          const existingContentResponse = await this.sendMessage({
-            action: 'getBlobContent',
-            token: this.githubToken,
-            owner: this.selectedRepository.owner.login,
-            repo: this.selectedRepository.name,
-            sha: existingFile.sha
-          });
-          
-          if (existingContentResponse.success) {
-            const existingContent = existingContentResponse.content;
-            const uploadedContent = typeof uploadedFile.content === 'string' 
-              ? uploadedFile.content 
-              : new TextDecoder().decode(uploadedFile.content);
-            
-            if (existingContent === uploadedContent) {
-              changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
-            } else {
-              changes.modified.push({ path, file: uploadedFile, status: 'modified' });
-            }
-          } else {
-            // If we can't fetch content, assume modified
-            changes.modified.push({ path, file: uploadedFile, status: 'modified' });
-          }
-        } catch (error) {
-          console.error(`Error comparing file ${path}:`, error);
-          // If comparison fails, assume modified
+        
+        // Compare SHA-1 hashes directly
+        if (existingFile.sha === uploadedFile.sha) {
+          changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
+        } else {
           changes.modified.push({ path, file: uploadedFile, status: 'modified' });
         }
       }
@@ -688,6 +698,11 @@ class ExtensionApp {
     }
     
     this.fileChangesSummary = changes;
+    
+    // Check if no changes detected
+    this.noChangesDetected = changes.new.length === 0 && 
+                             changes.modified.length === 0 && 
+                             changes.deleted.length === 0;
     
     // Initialize selected files (all new, modified, and unchanged selected by default)
     this.filesToPush = [
@@ -705,6 +720,23 @@ class ExtensionApp {
   renderFileChangesSummary() {
     const fileChangesList = document.getElementById('file-changes-list');
     const changes = this.fileChangesSummary;
+    
+    // Check for no changes detected
+    if (this.noChangesDetected) {
+      fileChangesList.innerHTML = `
+        <div class="no-changes-state">
+          <div class="no-changes-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+          </div>
+          <h3>No changes detected</h3>
+          <p>Your files are up to date with the selected branch. All files in your ZIP archive match the existing files in the repository.</p>
+        </div>
+      `;
+      this.updatePushButtonState();
+      return;
+    }
     
     const totalChanges = changes.new.length + changes.modified.length + changes.deleted.length;
     
@@ -730,6 +762,9 @@ class ExtensionApp {
     
     // Attach event listeners after DOM elements are created
     this.attachFileChangeListeners();
+    
+    // Update push button state
+    this.updatePushButtonState();
   }
 
   renderCategory(category) {
@@ -889,6 +924,42 @@ class ExtensionApp {
     });
   }
 
+  updatePushButtonState() {
+    const pushBtn = document.getElementById('push-btn');
+    const commitMessage = document.getElementById('commit-message').value.trim();
+    
+    if (!pushBtn) return;
+    
+    const shouldDisable = this.noChangesDetected || !commitMessage;
+    
+    pushBtn.disabled = shouldDisable;
+    
+    if (this.noChangesDetected) {
+      pushBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M20 6L9 17l-5-5"/>
+        </svg>
+        No Changes to Push
+      `;
+    } else if (!commitMessage) {
+      pushBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+        </svg>
+        Push to Repository
+      `;
+    } else {
+      pushBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+        </svg>
+        Push to Repository
+      `;
+    }
+  }
+
   async loadBranches() {
     const branchSelect = document.getElementById('branch-select');
     branchSelect.innerHTML = '<option value="">Loading branches...</option>';
@@ -919,6 +990,9 @@ class ExtensionApp {
     const charCount = document.querySelector('.char-count');
     charCount.textContent = `${message.length}/72 characters (recommended)`;
     charCount.className = `char-count ${message.length > 72 ? 'over-limit' : ''}`;
+    
+    // Update push button state when commit message changes
+    this.updatePushButtonState();
   }
 
   toggleClearWarning(show) {
@@ -998,6 +1072,8 @@ class ExtensionApp {
     this.fileChangesSummary = null;
     this.filesToPush = [];
     this.filesToDelete = [];
+    this.noChangesDetected = false;
+    this.noChangesDetected = false;
     this.showScreen('repo');
   }
 
