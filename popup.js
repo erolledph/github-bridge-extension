@@ -689,11 +689,10 @@ class ExtensionApp {
     
     this.fileChangesSummary = changes;
     
-    // Initialize selected files (all new, modified, and unchanged selected by default)
+    // Initialize selected files (only new and modified selected by default for pushing)
     this.filesToPush = [
       ...changes.new.map(item => item.file),
-      ...changes.modified.map(item => item.file),
-      ...changes.unchanged.map(item => item.file)
+      ...changes.modified.map(item => item.file)
     ];
     
     // Initialize files to delete (none selected by default)
@@ -706,22 +705,36 @@ class ExtensionApp {
     const fileChangesList = document.getElementById('file-changes-list');
     const changes = this.fileChangesSummary;
     
-    const totalChanges = changes.new.length + changes.modified.length + changes.deleted.length;
+    const totalMeaningfulChanges = changes.new.length + changes.modified.length + changes.deleted.length;
     
-    if (totalChanges === 0 && changes.unchanged.length === 0) {
+    if (totalMeaningfulChanges === 0) {
       fileChangesList.innerHTML = `
         <div class="empty-state">
-          <p>No files to compare</p>
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-green-500" style="margin: 0 auto 16px; color: #10b981;">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          <h3 style="font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">No New, Modified, or Deleted Files</h3>
+          <p style="color: #6b7280; margin-bottom: 8px;">All files are identical to the target branch.</p>
+          ${changes.unchanged.length > 0 ? 
+            `<p style="font-size: 14px; color: #9ca3af;">${changes.unchanged.length} unchanged file${changes.unchanged.length !== 1 ? 's' : ''} available.</p>` : 
+            ''
+          }
         </div>
       `;
+      // Disable push button if no meaningful changes
+      const pushBtn = document.getElementById('push-btn');
+      if (pushBtn) {
+        pushBtn.disabled = true;
+        pushBtn.innerHTML = 'Nothing to Commit';
+      }
       return;
     }
     
     const categories = [
-      { key: 'new', label: 'New files', items: changes.new },
-      { key: 'modified', label: 'Modified files', items: changes.modified },
-      { key: 'deleted', label: 'Deleted files', items: changes.deleted },
-      { key: 'unchanged', label: 'Unchanged files', items: changes.unchanged }
+      { key: 'new', label: 'New files', items: changes.new, icon: 'plus' },
+      { key: 'modified', label: 'Modified files', items: changes.modified, icon: 'edit' },
+      { key: 'deleted', label: 'Deleted files', items: changes.deleted, icon: 'trash' },
+      { key: 'unchanged', label: 'Unchanged files', items: changes.unchanged, icon: 'check' }
     ].filter(category => category.items.length > 0);
     
     const categorizedContent = categories.map(category => this.renderCategory(category)).join('');
@@ -730,6 +743,19 @@ class ExtensionApp {
     
     // Attach event listeners after DOM elements are created
     this.attachFileChangeListeners();
+    
+    // Ensure push button is enabled if there are meaningful changes
+    const pushBtn = document.getElementById('push-btn');
+    if (pushBtn) {
+      pushBtn.disabled = false;
+      pushBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+        </svg>
+        Push to Repository
+      `;
+    }
   }
 
   renderCategory(category) {
@@ -824,9 +850,9 @@ class ExtensionApp {
 
   isFileSelected(item) {
     if (item.status === 'deleted') {
-      return this.filesToDelete.includes(item.path);
+      return this.filesToDelete && this.filesToDelete.includes(item.path);
     } else {
-      return this.filesToPush.some(file => file.path === item.path);
+      return this.filesToPush && this.filesToPush.some(file => file.path === item.path);
     }
   }
 
@@ -937,6 +963,15 @@ class ExtensionApp {
       this.showError('commit-error', 'Please enter a commit message');
       return;
     }
+
+    // Check if there are meaningful changes to commit
+    const hasMeaningfulChanges = (this.filesToPush && this.filesToPush.length > 0) || 
+                                 (this.filesToDelete && this.filesToDelete.length > 0);
+    
+    if (!hasMeaningfulChanges && !clearExisting) {
+      this.showError('commit-error', 'No files selected to push or delete. Please select files to commit or enable "Clear existing files".');
+      return;
+    }
     
     pushBtn.disabled = true;
     errorDiv.classList.add('hidden');
@@ -950,14 +985,14 @@ class ExtensionApp {
     try {
       // When clearing existing files, use all files from the ZIP
       // Otherwise, use only the selected files for selective update
-      const filesToUpload = clearExisting ? this.uploadedFile.extractedFiles : this.filesToPush;
+      const filesToUpload = clearExisting ? this.uploadedFile.extractedFiles : (this.filesToPush || []);
       
       const response = await this.sendMessage({
         action: 'uploadFiles',
         token: this.githubToken,
         repository: this.selectedRepository,
         files: filesToUpload,
-        filesToDeletePaths: this.filesToDelete,
+        filesToDeletePaths: this.filesToDelete || [],
         commitInfo: {
           message: commitMessage,
           branch: selectedBranch,
@@ -976,6 +1011,13 @@ class ExtensionApp {
       progressDiv.classList.add('hidden');
     } finally {
       pushBtn.disabled = false;
+      pushBtn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="22" y1="2" x2="11" y2="13"/>
+          <polygon points="22,2 15,22 11,13 2,9 22,2"/>
+        </svg>
+        Push to Repository
+      `;
     }
   }
 
