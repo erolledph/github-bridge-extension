@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub Bridge",
+  "version": "1.0.0",
+  "description": "Upload Bolt.new projects directly to GitHub repositories",
+  "permissions": [
+    "identity",
+    "storage",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "GitHub Bridge",
+    "default_icon": {
+      "16": "assets/icon16.png",
+      "48": "assets/icon48.png",
+      "128": "assets/icon128.png"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
