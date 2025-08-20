@@ -148,9 +148,7 @@ class GitHubService {
             path: file.path,
             mode: '100644',
             type: 'blob',
-            content: file.content instanceof Uint8Array ? 
-              btoa(String.fromCharCode(...file.content)) : 
-              (typeof file.content === 'string' ? file.content : btoa(String.fromCharCode(...file.content)))
+            content: typeof file.content === 'string' ? file.content : btoa(String.fromCharCode(...file.content))
           }));
       } else {
         // Get existing tree to preserve files not being deleted
@@ -174,9 +172,7 @@ class GitHubService {
             path: file.path,
             mode: '100644',
             type: 'blob',
-            content: file.content instanceof Uint8Array ? 
-              btoa(String.fromCharCode(...file.content)) : 
-              (typeof file.content === 'string' ? file.content : btoa(String.fromCharCode(...file.content)))
+            content: typeof file.content === 'string' ? file.content : btoa(String.fromCharCode(...file.content))
           }));
 
         // Combine preserved and new files, with new files taking precedence
@@ -389,8 +385,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (!request.token || !request.repository || !request.files || !request.commitInfo) {
         sendResponse({ success: false, error: 'Missing required parameters' });
         return;
-            // Always get content as Uint8Array for consistent processing
-            const content = await zipEntry.async('uint8array');
       }
 
       const uploadService = new GitHubService(request.token);

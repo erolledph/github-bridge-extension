@@ -408,25 +408,18 @@ class ExtensionApp {
           if (!finalPath) continue;
           
           try {
-            // Always get content as Uint8Array for consistent SHA calculation
-            const content = await zipEntry.async('uint8array');
-            const sha = await this.calculateSha1(content);
-            
+            const content = await zipEntry.async('string');
             extractedFiles.push({
               path: finalPath,
               content: content,
-              isDirectory: false,
-              sha: sha
+              isDirectory: false
             });
           } catch {
             const content = await zipEntry.async('uint8array');
-            const sha = await this.calculateSha1(content);
-            
             extractedFiles.push({
               path: finalPath,
               content: content,
-              isDirectory: false,
-              sha: sha
+              isDirectory: false
             });
           }
         }
@@ -475,28 +468,6 @@ class ExtensionApp {
     }
   }
 
-  async calculateSha1(content) {
-    // Ensure content is a Uint8Array
-    let uint8Array;
-    if (content instanceof Uint8Array) {
-      uint8Array = content;
-    } else if (typeof content === 'string') {
-      uint8Array = new TextEncoder().encode(content);
-    } else if (content instanceof ArrayBuffer) {
-      uint8Array = new Uint8Array(content);
-    } else {
-      throw new Error('Unsupported content type for SHA-1 calculation');
-    }
-    
-    // Calculate SHA-1 hash using Web Crypto API
-    const hashBuffer = await crypto.subtle.digest('SHA-1', uint8Array);
-    const hashArray = new Uint8Array(hashBuffer);
-    
-    // Convert to hexadecimal string
-    return Array.from(hashArray)
-      .map(byte => byte.toString(16).padStart(2, '0'))
-      .join('');
-  }
   showFilePreview() {
     const preview = document.getElementById('file-preview');
     const fileInfo = document.getElementById('file-info');
@@ -677,11 +648,33 @@ class ExtensionApp {
       } else {
         // File exists, check if modified
         const existingFile = existingFiles.get(path);
-        
-        // Compare SHA-1 hashes directly
-        if (existingFile.sha === uploadedFile.sha) {
-          changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
-        } else {
+        try {
+          const existingContentResponse = await this.sendMessage({
+            action: 'getBlobContent',
+            token: this.githubToken,
+            owner: this.selectedRepository.owner.login,
+            repo: this.selectedRepository.name,
+            sha: existingFile.sha
+          });
+          
+          if (existingContentResponse.success) {
+            const existingContent = existingContentResponse.content;
+            const uploadedContent = typeof uploadedFile.content === 'string' 
+              ? uploadedFile.content 
+              : new TextDecoder().decode(uploadedFile.content);
+            
+            if (existingContent === uploadedContent) {
+              changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
+            } else {
+              changes.modified.push({ path, file: uploadedFile, status: 'modified' });
+            }
+          } else {
+            // If we can't fetch content, assume modified
+            changes.modified.push({ path, file: uploadedFile, status: 'modified' });
+          }
+        } catch (error) {
+          console.error(`Error comparing file ${path}:`, error);
+          // If comparison fails, assume modified
           changes.modified.push({ path, file: uploadedFile, status: 'modified' });
         }
       }
