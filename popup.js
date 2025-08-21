@@ -657,57 +657,66 @@ class ExtensionApp {
         // File exists, check if modified
         const existingFile = existingFiles.get(path);
         try {
-          const existingContentResponse = await this.sendMessage({
-            action: 'getBlobContent',
-            token: this.githubToken,
-            owner: this.selectedRepository.owner.login,
-            repo: this.selectedRepository.name,
-            sha: existingFile.sha
-          });
+          // Try to determine if the uploaded file is binary
+          const isUploadedBinary = this.isBinaryFile(uploadedFile.content, path);
           
-          if (existingContentResponse.success) {
-            let existingContent = existingContentResponse.content;
+          if (isUploadedBinary) {
+            // Binary file comparison using base64
+            const uploadedBase64 = this.arrayBufferToBase64(uploadedFile.content);
             
-            // Decode uploaded content from Uint8Array to UTF-8 string
-            let uploadedContent;
-            try {
-              uploadedContent = new TextDecoder('utf-8', { fatal: true }).decode(uploadedFile.content);
-            } catch (decodeError) {
-              // Binary file comparison
-              const uploadedBase64 = this.arrayBufferToBase64(uploadedFile.content);
-              
-              const existingBase64Response = await this.sendMessage({
-                action: 'getBlobContentRaw',
-                token: this.githubToken,
-                owner: this.selectedRepository.owner.login,
-                repo: this.selectedRepository.name,
-                sha: existingFile.sha
-              });
-              
-              if (existingBase64Response.success) {
-                const existingBase64 = existingBase64Response.content;
-                if (uploadedBase64 === existingBase64) {
-                  changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
-                } else {
-                  changes.modified.push({ path, file: uploadedFile, status: 'modified' });
-                }
+            const existingBase64Response = await this.sendMessage({
+              action: 'getBlobContentRaw',
+              token: this.githubToken,
+              owner: this.selectedRepository.owner.login,
+              repo: this.selectedRepository.name,
+              sha: existingFile.sha
+            });
+            
+            if (existingBase64Response.success) {
+              const existingBase64 = existingBase64Response.content.replace(/\s/g, '');
+              if (uploadedBase64 === existingBase64) {
+                changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
               } else {
                 changes.modified.push({ path, file: uploadedFile, status: 'modified' });
               }
-              continue;
-            }
-            
-            // Normalize content for text files
-            existingContent = this.normalizeContent(existingContent);
-            uploadedContent = this.normalizeContent(uploadedContent);
-            
-            if (existingContent === uploadedContent) {
-              changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
             } else {
               changes.modified.push({ path, file: uploadedFile, status: 'modified' });
             }
           } else {
-            changes.modified.push({ path, file: uploadedFile, status: 'modified' });
+            // Text file comparison
+            const existingContentResponse = await this.sendMessage({
+              action: 'getBlobContent',
+              token: this.githubToken,
+              owner: this.selectedRepository.owner.login,
+              repo: this.selectedRepository.name,
+              sha: existingFile.sha
+            });
+            
+            if (existingContentResponse.success) {
+              let existingContent = existingContentResponse.content;
+              
+              // Convert uploaded content to string
+              let uploadedContent;
+              try {
+                uploadedContent = new TextDecoder('utf-8', { fatal: true }).decode(uploadedFile.content);
+              } catch (decodeError) {
+                // If decoding fails, treat as modified
+                changes.modified.push({ path, file: uploadedFile, status: 'modified' });
+                continue;
+              }
+              
+              // Normalize content for text files
+              existingContent = this.normalizeContent(existingContent);
+              uploadedContent = this.normalizeContent(uploadedContent);
+              
+              if (existingContent === uploadedContent) {
+                changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
+              } else {
+                changes.modified.push({ path, file: uploadedFile, status: 'modified' });
+              }
+            } else {
+              changes.modified.push({ path, file: uploadedFile, status: 'modified' });
+            }
           }
         } catch (error) {
           console.error(`Error comparing file ${path}:`, error);
@@ -737,6 +746,34 @@ class ExtensionApp {
     this.renderFileChangesSummary();
   }
 
+  // Helper function to detect binary files
+  isBinaryFile(content, filePath) {
+    // Check file extension first
+    const binaryExtensions = [
+      '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.webp',
+      '.woff', '.woff2', '.ttf', '.eot', '.otf',
+      '.pdf', '.zip', '.tar', '.gz', '.rar', '.7z',
+      '.mp3', '.mp4', '.avi', '.mov', '.wav', '.ogg',
+      '.exe', '.dll', '.so', '.dylib', '.bin'
+    ];
+    
+    const ext = filePath.toLowerCase().substring(filePath.lastIndexOf('.'));
+    if (binaryExtensions.includes(ext)) {
+      return true;
+    }
+    
+    // Check content for null bytes (binary indicator)
+    if (content instanceof Uint8Array) {
+      const checkLength = Math.min(1024, content.length);
+      for (let i = 0; i < checkLength; i++) {
+        if (content[i] === 0) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
   normalizeContent(content) {
     return content
       .replace(/\r\n/g, '\n')
@@ -747,13 +784,19 @@ class ExtensionApp {
   }
 
   arrayBufferToBase64(buffer) {
+    // Handle both ArrayBuffer and Uint8Array
+    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+    
+    // Use a more efficient method for base64 conversion
+    const CHUNK_SIZE = 0x8000; // 32KB chunks to avoid call stack limits
     let binary = '';
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    
+    for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+      const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+      binary += String.fromCharCode.apply(null, chunk);
     }
-    return btoa(binary);
+    
+    return btoa(binary).replace(/\s/g, '');
   }
 
   renderFileChangesSummary() {
