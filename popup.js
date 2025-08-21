@@ -27,41 +27,91 @@ class ExtensionApp {
 
   setupEventListeners() {
     console.log('Setting up event listeners');
-    
-    // Authentication - Personal Access Token only
-    document.getElementById('manual-auth-button').addEventListener('click', () => this.authenticateWithManualToken());
-    
+
+    // Authentication
+    const authBtn = document.getElementById('auth-button');
+    if (authBtn) authBtn.addEventListener('click', () => this.authenticate());
+
+    const manualAuthBtn = document.getElementById('manual-auth-button');
+    if (manualAuthBtn) manualAuthBtn.addEventListener('click', () => this.authenticateWithManualToken());
+
+    // Manual token toggle buttons
+    const showManualBtn = document.getElementById('show-manual-token-btn');
+    if (showManualBtn) {
+      showManualBtn.addEventListener('click', () => {
+        console.log('Show manual token button clicked');
+        this.toggleManualTokenSection();
+      });
+    }
+
+    const backToOAuthBtn = document.getElementById('back-to-oauth-btn');
+    if (backToOAuthBtn) {
+      backToOAuthBtn.addEventListener('click', () => {
+        console.log('Back to OAuth button clicked');
+        this.toggleManualTokenSection();
+      });
+    }
+
     // Repository screen
-    document.getElementById('repo-back-btn').addEventListener('click', () => this.showScreen('auth'));
-    document.getElementById('repo-search').addEventListener('input', (e) => this.filterRepositories(e.target.value));
-    document.getElementById('create-repo-btn').addEventListener('click', () => this.toggleCreateForm());
-    document.getElementById('cancel-create-btn').addEventListener('click', () => this.toggleCreateForm());
-    document.getElementById('confirm-create-btn').addEventListener('click', () => this.createRepository());
-    
+    const repoBackBtn = document.getElementById('repo-back-btn');
+    if (repoBackBtn) repoBackBtn.addEventListener('click', () => this.showScreen('auth'));
+
+    const repoSearch = document.getElementById('repo-search');
+    if (repoSearch) repoSearch.addEventListener('input', (e) => this.filterRepositories(e.target.value));
+
+    const createRepoBtn = document.getElementById('create-repo-btn');
+    if (createRepoBtn) createRepoBtn.addEventListener('click', () => this.toggleCreateForm());
+
+    const cancelCreateBtn = document.getElementById('cancel-create-btn');
+    if (cancelCreateBtn) cancelCreateBtn.addEventListener('click', () => this.toggleCreateForm());
+
+    const confirmCreateBtn = document.getElementById('confirm-create-btn');
+    if (confirmCreateBtn) confirmCreateBtn.addEventListener('click', () => this.createRepository());
+
     // Upload screen
-    document.getElementById('upload-back-btn').addEventListener('click', () => this.showScreen('repo'));
-    document.getElementById('browse-btn').addEventListener('click', () => document.getElementById('file-input').click());
-    document.getElementById('file-input').addEventListener('change', (e) => this.handleFileSelect(e));
-    document.getElementById('continue-upload-btn').addEventListener('click', () => this.showScreen('commit'));
-    
+    const uploadBackBtn = document.getElementById('upload-back-btn');
+    if (uploadBackBtn) uploadBackBtn.addEventListener('click', () => this.showScreen('repo'));
+
+    const browseBtn = document.getElementById('browse-btn');
+    if (browseBtn) browseBtn.addEventListener('click', () => document.getElementById('file-input').click());
+
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+
+    const continueUploadBtn = document.getElementById('continue-upload-btn');
+    if (continueUploadBtn) continueUploadBtn.addEventListener('click', () => this.showScreen('commit'));
+
     // Commit screen
-    document.getElementById('commit-back-btn').addEventListener('click', () => this.showScreen('upload'));
-    document.getElementById('commit-message').addEventListener('input', (e) => this.updateCharCount(e.target.value));
-    document.getElementById('clear-existing').addEventListener('change', (e) => this.toggleClearWarning(e.target.checked));
-    document.getElementById('push-btn').addEventListener('click', () => this.pushToRepository());
-    
+    const commitBackBtn = document.getElementById('commit-back-btn');
+    if (commitBackBtn) commitBackBtn.addEventListener('click', () => this.showScreen('upload'));
+
+    const commitMsg = document.getElementById('commit-message');
+    if (commitMsg) commitMsg.addEventListener('input', (e) => this.updateCharCount(e.target.value));
+
+    const clearExisting = document.getElementById('clear-existing');
+    if (clearExisting) clearExisting.addEventListener('change', (e) => this.toggleClearWarning(e.target.checked));
+
+    const pushBtn = document.getElementById('push-btn');
+    if (pushBtn) pushBtn.addEventListener('click', () => this.pushToRepository());
+
     // Success screen
-    document.getElementById('view-github-btn').addEventListener('click', () => this.viewOnGitHub());
-    document.getElementById('start-over-btn').addEventListener('click', () => this.startOver());
-    
+    const viewGithubBtn = document.getElementById('view-github-btn');
+    if (viewGithubBtn) viewGithubBtn.addEventListener('click', () => this.viewOnGitHub());
+
+    const startOverBtn = document.getElementById('start-over-btn');
+    if (startOverBtn) startOverBtn.addEventListener('click', () => this.startOver());
+
     // External link in footer
-    document.getElementById('external-link').addEventListener('click', (e) => this.handleExternalLink(e));
-    
+    const externalLink = document.getElementById('external-link');
+    if (externalLink) externalLink.addEventListener('click', (e) => this.handleExternalLink(e));
+
     // Drop zone
     const dropZone = document.getElementById('drop-zone');
-    dropZone.addEventListener('dragover', (e) => this.handleDragOver(e));
-    dropZone.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-    dropZone.addEventListener('drop', (e) => this.handleDrop(e));
+    if (dropZone) {
+      dropZone.addEventListener('dragover', (e) => this.handleDragOver(e));
+      dropZone.addEventListener('dragleave', (e) => this.handleDragLeave(e));
+      dropZone.addEventListener('drop', (e) => this.handleDrop(e));
+    }
   }
 
   async checkStoredToken() {
@@ -99,6 +149,89 @@ class ExtensionApp {
       console.error('Error checking stored token:', error);
       this.showError('auth-error', 'GitHub Token Validation Failed or Token expired\n\nYour GitHub token could not be validated. This may happen if the token has expired, been revoked, or lost required permissions. Please logout and login again to refresh your authentication.');
       this.showScreen('auth');
+    }
+  }
+
+  async authenticate() {
+    return this.authenticateWithOAuth();
+  }
+
+  toggleManualTokenSection() {
+    console.log('Toggling manual token section');
+    
+    const authOptions = document.getElementById('auth-options');
+    const manualTokenSection = document.querySelector('.manual-token-section');
+    const errorDiv = document.getElementById('auth-error');
+    
+    console.log('Auth options element:', authOptions);
+    console.log('Manual token section element:', manualTokenSection);
+    
+    if (!authOptions || !manualTokenSection) {
+      console.error('Required elements not found for toggle');
+      return;
+    }
+    
+    // Toggle visibility of both sections
+    authOptions.classList.toggle('hidden');
+    manualTokenSection.classList.toggle('hidden');
+    
+    console.log('Auth options hidden:', authOptions.classList.contains('hidden'));
+    console.log('Manual token section hidden:', manualTokenSection.classList.contains('hidden'));
+    
+    // Clear any existing errors
+    errorDiv.classList.add('hidden');
+    
+    // If showing manual token section, focus on the input
+    if (!manualTokenSection.classList.contains('hidden')) {
+      const tokenInput = document.getElementById('manual-token');
+      if (tokenInput) {
+        setTimeout(() => {
+          tokenInput.focus();
+          console.log('Focused on token input');
+        }, 100);
+      }
+    } else {
+      // Clear the token input when going back
+      const tokenInput = document.getElementById('manual-token');
+      if (tokenInput) {
+        tokenInput.value = '';
+      }
+    }
+  }
+
+  async authenticateWithOAuth() {
+    const authButton = document.getElementById('auth-button');
+    const errorDiv = document.getElementById('auth-error');
+    
+    authButton.disabled = true;
+    authButton.innerHTML = `
+      <div class="spinner spinner--light"></div>
+      Signing in...
+    `;
+    errorDiv.classList.add('hidden');
+    
+    try {
+      const response = await this.sendMessage({ action: 'authenticate' });
+      
+      if (response.success) {
+        this.githubToken = response.token;
+        this.showScreen('repo');
+        this.loadRepositories();
+      } else {
+        throw new Error(response.error || 'Authentication failed');
+      }
+    } catch (error) {
+      console.error('Authentication error:', error);
+      errorDiv.textContent = error.message;
+      errorDiv.classList.remove('hidden');
+    } finally {
+      authButton.disabled = false;
+      authButton.innerHTML = `
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        Sign in with GitHub
+      `;
     }
   }
 
@@ -169,9 +302,9 @@ class ExtensionApp {
       authButton.disabled = false;
       authButton.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
         Authenticate
       `;
     }
@@ -408,25 +541,13 @@ class ExtensionApp {
           if (!finalPath) continue;
           
           try {
-            // Try to read as string first, with proper encoding handling
-            let content;
-            try {
-              content = await zipEntry.async('string');
-              // Normalize line endings for consistency
-              content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            } catch (stringError) {
-              // If string reading fails, try as binary
-              console.warn(`Failed to read ${finalPath} as string, trying binary:`, stringError);
-              content = await zipEntry.async('uint8array');
-            }
-            
+            const content = await zipEntry.async('string');
             extractedFiles.push({
               path: finalPath,
               content: content,
               isDirectory: false
             });
-          } catch (readError) {
-            console.warn(`Failed to read file ${finalPath}, trying as binary:`, readError);
+          } catch {
             const content = await zipEntry.async('uint8array');
             extractedFiles.push({
               path: finalPath,
@@ -442,10 +563,6 @@ class ExtensionApp {
         size: file.size,
         extractedFiles: extractedFiles
       };
-      
-      console.log(`Processed ZIP file: ${file.name}`);
-      console.log(`Extracted ${extractedFiles.length} files`);
-      console.log('File paths:', extractedFiles.map(f => f.path));
       
       this.showFilePreview();
       
@@ -588,10 +705,13 @@ class ExtensionApp {
   }
 
   async analyzeFileChanges() {
+    console.log('Starting analyzeFileChanges...');
     try {
       const selectedBranch = document.getElementById('branch-select').value || this.selectedRepository.default_branch;
+      console.log('Selected branch:', selectedBranch);
       
       // Get branch details
+      console.log('Fetching branch details...');
       const branchResponse = await this.sendMessage({
         action: 'getBranchDetails',
         token: this.githubToken,
@@ -599,12 +719,14 @@ class ExtensionApp {
         repo: this.selectedRepository.name,
         branch: selectedBranch
       });
+      console.log('Branch details response:', branchResponse);
       
       if (!branchResponse.success) {
         throw new Error(branchResponse.error);
       }
       
       // Get existing file tree
+      console.log('Fetching file tree...');
       const treeResponse = await this.sendMessage({
         action: 'getTree',
         token: this.githubToken,
@@ -613,13 +735,16 @@ class ExtensionApp {
         sha: branchResponse.branchDetails.commit.sha,
         recursive: true
       });
+      console.log('Tree response received, tree items count:', treeResponse.success ? treeResponse.tree.tree.length : 'failed');
       
       if (!treeResponse.success) {
         throw new Error(treeResponse.error);
       }
       
       // Compare files
+      console.log('Starting file comparison...');
       await this.compareFiles(treeResponse.tree.tree);
+      console.log('File comparison completed');
       
     } catch (error) {
       console.error('Error analyzing file changes:', error);
@@ -634,6 +759,7 @@ class ExtensionApp {
   }
 
   async compareFiles(existingTree) {
+    console.log('Starting compareFiles with', existingTree.length, 'existing files');
     const existingFiles = new Map();
     const uploadedFiles = new Map();
     
@@ -643,11 +769,13 @@ class ExtensionApp {
       .forEach(item => {
         existingFiles.set(item.path, item);
       });
+    console.log('Mapped', existingFiles.size, 'existing files');
     
     // Map uploaded files
     this.uploadedFile.extractedFiles.forEach(file => {
       uploadedFiles.set(file.path, file);
     });
+    console.log('Mapped', uploadedFiles.size, 'uploaded files');
     
     const changes = {
       new: [],
@@ -656,15 +784,38 @@ class ExtensionApp {
       unchanged: []
     };
     
+    // Helper function to normalize line endings and whitespace for comparison
+    const normalizeContent = (content) => {
+      if (typeof content !== 'string') {
+        return content;
+      }
+      // Normalize line endings to LF and trim trailing whitespace from each line
+      return content
+        .replace(/\r\n/g, '\n')  // Convert CRLF to LF
+        .replace(/\r/g, '\n')    // Convert CR to LF
+        .split('\n')
+        .map(line => line.trimEnd()) // Remove trailing whitespace from each line
+        .join('\n')
+        .replace(/\n+$/, '') // Remove trailing blank lines
+        .trim(); // Remove leading/trailing whitespace from entire content
+    };
+    
+    let processedCount = 0;
     // Check uploaded files against existing
     for (const [path, uploadedFile] of uploadedFiles) {
+      processedCount++;
+      console.log(`Processing file ${processedCount}/${uploadedFiles.size}: ${path}`);
+      
       if (!existingFiles.has(path)) {
         // New file
+        console.log(`File ${path} is new`);
         changes.new.push({ path, file: uploadedFile, status: 'new' });
       } else {
         // File exists, check if modified
         const existingFile = existingFiles.get(path);
+        console.log(`Comparing existing file ${path}...`);
         try {
+          console.log(`Fetching content for ${path} (sha: ${existingFile.sha})`);
           const existingContentResponse = await this.sendMessage({
             action: 'getBlobContent',
             token: this.githubToken,
@@ -672,56 +823,28 @@ class ExtensionApp {
             repo: this.selectedRepository.name,
             sha: existingFile.sha
           });
+          console.log(`Content fetch response for ${path}:`, existingContentResponse.success ? 'success' : 'failed');
           
           if (existingContentResponse.success) {
-            const existingContent = existingContentResponse.content;
+            const existingContent = normalizeContent(existingContentResponse.content);
             const uploadedContent = typeof uploadedFile.content === 'string' 
-              ? uploadedFile.content 
-              : new TextDecoder().decode(uploadedFile.content);
+              ? normalizeContent(uploadedFile.content)
+              : normalizeContent(new TextDecoder().decode(uploadedFile.content));
             
-            // Debug logging for file comparison
             console.log(`Comparing file: ${path}`);
             console.log(`Existing content length: ${existingContent.length}`);
             console.log(`Uploaded content length: ${uploadedContent.length}`);
             
-            // Show first 100 characters for debugging (avoid logging huge files)
-            if (existingContent.length < 1000 && uploadedContent.length < 1000) {
-              console.log(`Existing content preview:`, JSON.stringify(existingContent.substring(0, 100)));
-              console.log(`Uploaded content preview:`, JSON.stringify(uploadedContent.substring(0, 100)));
-            }
-            
-            // Normalize line endings for comparison
-            const normalizedExistingContent = existingContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            const normalizedUploadedContent = uploadedContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-            
-            // Additional debug info after normalization
-            if (normalizedExistingContent.length !== existingContent.length || 
-                normalizedUploadedContent.length !== uploadedContent.length) {
-              console.log(`Line ending normalization applied for ${path}`);
-              console.log(`Normalized existing length: ${normalizedExistingContent.length}`);
-              console.log(`Normalized uploaded length: ${normalizedUploadedContent.length}`);
-            }
-            if (normalizedExistingContent === normalizedUploadedContent) {
-              console.log(`File ${path} is unchanged after normalization`);
+            if (existingContent === uploadedContent) {
+              console.log(`File ${path} is unchanged`);
               changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
             } else {
               console.log(`File ${path} is modified`);
-              // Log character-by-character comparison for small files to help debug
-              if (normalizedExistingContent.length < 200 && normalizedUploadedContent.length < 200) {
-                for (let i = 0; i < Math.max(normalizedExistingContent.length, normalizedUploadedContent.length); i++) {
-                  const existingChar = normalizedExistingContent[i] || 'EOF';
-                  const uploadedChar = normalizedUploadedContent[i] || 'EOF';
-                  if (existingChar !== uploadedChar) {
-                    console.log(`First difference at position ${i}: existing='${existingChar}' (${existingChar.charCodeAt ? existingChar.charCodeAt(0) : 'N/A'}), uploaded='${uploadedChar}' (${uploadedChar.charCodeAt ? uploadedChar.charCodeAt(0) : 'N/A'})`);
-                    break;
-                  }
-                }
-              }
               changes.modified.push({ path, file: uploadedFile, status: 'modified' });
             }
           } else {
             // If we can't fetch content, assume modified
-            console.log(`Could not fetch existing content for ${path}, assuming modified`);
+            console.log(`Could not fetch content for ${path}, assuming modified`);
             changes.modified.push({ path, file: uploadedFile, status: 'modified' });
           }
         } catch (error) {
@@ -730,24 +853,31 @@ class ExtensionApp {
           changes.modified.push({ path, file: uploadedFile, status: 'modified' });
         }
       }
+      
+      // Add a small delay to prevent overwhelming the API and allow UI updates
+      if (processedCount % 10 === 0) {
+        console.log(`Processed ${processedCount} files, taking a brief pause...`);
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
     }
     
+    console.log('Checking for deleted files...');
     // Check for deleted files
     for (const [path, existingFile] of existingFiles) {
       if (!uploadedFiles.has(path)) {
+        console.log(`File ${path} will be deleted`);
         changes.deleted.push({ path, file: existingFile, status: 'deleted' });
       }
     }
     
-    this.fileChangesSummary = changes;
-    
-    // Debug summary
     console.log('File changes summary:', {
       new: changes.new.length,
       modified: changes.modified.length,
       deleted: changes.deleted.length,
       unchanged: changes.unchanged.length
     });
+    
+    this.fileChangesSummary = changes;
     
     // Initialize selected files (all new, modified, and unchanged selected by default)
     this.filesToPush = [
@@ -759,7 +889,9 @@ class ExtensionApp {
     // Initialize files to delete (none selected by default)
     this.filesToDelete = changes.deleted.map(item => item.path);
     
+    console.log('Rendering file changes summary...');
     this.renderFileChangesSummary();
+    console.log('File changes summary rendered');
   }
 
   renderFileChangesSummary() {
