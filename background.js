@@ -103,8 +103,43 @@ class GitHubService {
   async getBlobContent(owner, repo, sha) {
     try {
       const blob = await this.makeRequest(`/repos/${owner}/${repo}/git/blobs/${sha}`);
-      // Decode base64 content
-      const content = blob.encoding === 'base64' ? atob(blob.content) : blob.content;
+      
+      // Handle different encodings more robustly
+      let content;
+      if (blob.encoding === 'base64') {
+        try {
+          // Decode base64 content
+          const binaryString = atob(blob.content);
+          
+          // Try to decode as UTF-8, fallback to binary string if it fails
+          try {
+            // Convert binary string to Uint8Array
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            
+            // Decode as UTF-8
+            content = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+          } catch (decodeError) {
+            // If UTF-8 decoding fails, use the binary string as-is
+            console.warn(`UTF-8 decoding failed for blob ${sha}, using binary string:`, decodeError);
+            content = binaryString;
+          }
+        } catch (base64Error) {
+          console.error(`Base64 decoding failed for blob ${sha}:`, base64Error);
+          throw new Error(`Failed to decode base64 content: ${base64Error.message}`);
+        }
+      } else {
+        // Content is already in text format
+        content = blob.content;
+      }
+      
+      // Normalize line endings to Unix-style for consistent comparison
+      if (typeof content === 'string') {
+        content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      }
+      
       return content;
     } catch (error) {
       console.error('Failed to fetch blob content:', error);

@@ -408,13 +408,25 @@ class ExtensionApp {
           if (!finalPath) continue;
           
           try {
-            const content = await zipEntry.async('string');
+            // Try to read as string first, with proper encoding handling
+            let content;
+            try {
+              content = await zipEntry.async('string');
+              // Normalize line endings for consistency
+              content = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            } catch (stringError) {
+              // If string reading fails, try as binary
+              console.warn(`Failed to read ${finalPath} as string, trying binary:`, stringError);
+              content = await zipEntry.async('uint8array');
+            }
+            
             extractedFiles.push({
               path: finalPath,
               content: content,
               isDirectory: false
             });
-          } catch {
+          } catch (readError) {
+            console.warn(`Failed to read file ${finalPath}, trying as binary:`, readError);
             const content = await zipEntry.async('uint8array');
             extractedFiles.push({
               path: finalPath,
@@ -430,6 +442,10 @@ class ExtensionApp {
         size: file.size,
         extractedFiles: extractedFiles
       };
+      
+      console.log(`Processed ZIP file: ${file.name}`);
+      console.log(`Extracted ${extractedFiles.length} files`);
+      console.log('File paths:', extractedFiles.map(f => f.path));
       
       this.showFilePreview();
       
@@ -663,13 +679,49 @@ class ExtensionApp {
               ? uploadedFile.content 
               : new TextDecoder().decode(uploadedFile.content);
             
-            if (existingContent === uploadedContent) {
+            // Debug logging for file comparison
+            console.log(`Comparing file: ${path}`);
+            console.log(`Existing content length: ${existingContent.length}`);
+            console.log(`Uploaded content length: ${uploadedContent.length}`);
+            
+            // Show first 100 characters for debugging (avoid logging huge files)
+            if (existingContent.length < 1000 && uploadedContent.length < 1000) {
+              console.log(`Existing content preview:`, JSON.stringify(existingContent.substring(0, 100)));
+              console.log(`Uploaded content preview:`, JSON.stringify(uploadedContent.substring(0, 100)));
+            }
+            
+            // Normalize line endings for comparison
+            const normalizedExistingContent = existingContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            const normalizedUploadedContent = uploadedContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+            
+            // Additional debug info after normalization
+            if (normalizedExistingContent.length !== existingContent.length || 
+                normalizedUploadedContent.length !== uploadedContent.length) {
+              console.log(`Line ending normalization applied for ${path}`);
+              console.log(`Normalized existing length: ${normalizedExistingContent.length}`);
+              console.log(`Normalized uploaded length: ${normalizedUploadedContent.length}`);
+            }
+            if (normalizedExistingContent === normalizedUploadedContent) {
+              console.log(`File ${path} is unchanged after normalization`);
               changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
             } else {
+              console.log(`File ${path} is modified`);
+              // Log character-by-character comparison for small files to help debug
+              if (normalizedExistingContent.length < 200 && normalizedUploadedContent.length < 200) {
+                for (let i = 0; i < Math.max(normalizedExistingContent.length, normalizedUploadedContent.length); i++) {
+                  const existingChar = normalizedExistingContent[i] || 'EOF';
+                  const uploadedChar = normalizedUploadedContent[i] || 'EOF';
+                  if (existingChar !== uploadedChar) {
+                    console.log(`First difference at position ${i}: existing='${existingChar}' (${existingChar.charCodeAt ? existingChar.charCodeAt(0) : 'N/A'}), uploaded='${uploadedChar}' (${uploadedChar.charCodeAt ? uploadedChar.charCodeAt(0) : 'N/A'})`);
+                    break;
+                  }
+                }
+              }
               changes.modified.push({ path, file: uploadedFile, status: 'modified' });
             }
           } else {
             // If we can't fetch content, assume modified
+            console.log(`Could not fetch existing content for ${path}, assuming modified`);
             changes.modified.push({ path, file: uploadedFile, status: 'modified' });
           }
         } catch (error) {
@@ -688,6 +740,14 @@ class ExtensionApp {
     }
     
     this.fileChangesSummary = changes;
+    
+    // Debug summary
+    console.log('File changes summary:', {
+      new: changes.new.length,
+      modified: changes.modified.length,
+      deleted: changes.deleted.length,
+      unchanged: changes.unchanged.length
+    });
     
     // Initialize selected files (all new, modified, and unchanged selected by default)
     this.filesToPush = [
