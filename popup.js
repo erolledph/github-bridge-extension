@@ -94,6 +94,10 @@ class ExtensionApp {
     const pushBtn = document.getElementById('push-btn');
     if (pushBtn) pushBtn.addEventListener('click', () => this.pushToRepository());
 
+    // Refresh changes button
+    const refreshChangesBtn = document.getElementById('refresh-changes-btn');
+    if (refreshChangesBtn) refreshChangesBtn.addEventListener('click', () => this.refreshFileChanges());
+
     // Success screen
     const viewGithubBtn = document.getElementById('view-github-btn');
     if (viewGithubBtn) viewGithubBtn.addEventListener('click', () => this.viewOnGitHub());
@@ -680,6 +684,12 @@ class ExtensionApp {
       </div>
     `;
 
+    // Reset UI state
+    const pushBtn = document.getElementById('push-btn');
+    const noChangesMessage = document.getElementById('no-changes-message');
+    pushBtn.disabled = false;
+    noChangesMessage.classList.add('hidden');
+
     // Set up repository info
     const repoInfo = document.getElementById('repo-info');
     repoInfo.innerHTML = `
@@ -702,6 +712,48 @@ class ExtensionApp {
     
     // Analyze file changes
     await this.analyzeFileChanges();
+  }
+
+  async refreshFileChanges() {
+    const refreshBtn = document.getElementById('refresh-changes-btn');
+    const originalContent = refreshBtn.innerHTML;
+    
+    // Disable button and show loading state
+    refreshBtn.disabled = true;
+    refreshBtn.innerHTML = `
+      <div class="spinner-small"></div>
+      Refreshing...
+    `;
+    
+    // Reset file changes list to loading state
+    const fileChangesList = document.getElementById('file-changes-list');
+    fileChangesList.innerHTML = `
+      <div class="loading-changes">
+        <div class="spinner"></div>
+        <p>Re-analyzing file changes...</p>
+      </div>
+    `;
+    
+    // Hide no changes message
+    const noChangesMessage = document.getElementById('no-changes-message');
+    noChangesMessage.classList.add('hidden');
+    
+    try {
+      // Re-run the file analysis
+      await this.analyzeFileChanges();
+    } catch (error) {
+      console.error('Error refreshing file changes:', error);
+      fileChangesList.innerHTML = `
+        <div class="error-state">
+          <p>Failed to refresh file changes: ${error.message}</p>
+          <p>Please try again or proceed with the upload.</p>
+        </div>
+      `;
+    } finally {
+      // Re-enable button and restore original content
+      refreshBtn.disabled = false;
+      refreshBtn.innerHTML = originalContent;
+    }
   }
 
   async analyzeFileChanges() {
@@ -746,6 +798,9 @@ class ExtensionApp {
       await this.compareFiles(treeResponse.tree.tree);
       console.log('File comparison completed');
       
+      // Update UI based on analysis results
+      this.updateCommitScreenUI();
+      
     } catch (error) {
       console.error('Error analyzing file changes:', error);
       const fileChangesList = document.getElementById('file-changes-list');
@@ -755,6 +810,35 @@ class ExtensionApp {
           <p>You can still proceed with the upload.</p>
         </div>
       `;
+      
+      // Ensure push button is enabled if analysis fails
+      const pushBtn = document.getElementById('push-btn');
+      pushBtn.disabled = false;
+    }
+  }
+
+  updateCommitScreenUI() {
+    const pushBtn = document.getElementById('push-btn');
+    const noChangesMessage = document.getElementById('no-changes-message');
+    
+    if (!this.fileChangesSummary) {
+      // If no file changes summary, enable push button
+      pushBtn.disabled = false;
+      noChangesMessage.classList.add('hidden');
+      return;
+    }
+    
+    const { new: newFiles, modified, deleted } = this.fileChangesSummary;
+    const hasChanges = newFiles.length > 0 || modified.length > 0 || deleted.length > 0;
+    
+    if (!hasChanges) {
+      // No changes detected - disable push button and show message
+      pushBtn.disabled = true;
+      noChangesMessage.classList.remove('hidden');
+    } else {
+      // Changes detected - enable push button and hide message
+      pushBtn.disabled = false;
+      noChangesMessage.classList.add('hidden');
     }
   }
 

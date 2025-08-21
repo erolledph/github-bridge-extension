@@ -235,7 +235,27 @@
 
                 <!-- File Changes Summary -->
                 <div class="file-changes-summary">
-                    <h3>File Changes Summary</h3>
+                    <div class="file-changes-header">
+                        <h3>File Changes Summary</h3>
+                        <button id="refresh-changes-btn" class="btn-refresh" title="Re-analyze file changes">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+                            </svg>
+                            Refresh
+                        </button>
+                    </div>
+                    <div id="no-changes-message" class="info-message hidden">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22,4 12,14.01 9,11.01"></polyline>
+                        </svg>
+                        <div>
+                            <strong>Your app is up to date!</strong>
+                            <p>No new files, no deleted files, no modified files detected.</p>
+                        </div>
+                    </div>
                     <div id="file-changes-list" class="file-changes-container">
                         <div class="loading-changes">
                             <div class="spinner"></div>
