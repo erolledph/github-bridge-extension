@@ -8,13 +8,59 @@ class GitHubService {
 
   // Helper function to convert Uint8Array to base64 string
   arrayBufferToBase64(buffer) {
+    // Handle both ArrayBuffer and Uint8Array
+    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
+    
+    // Use a more efficient method for base64 conversion
+    const CHUNK_SIZE = 0x8000; // 32KB chunks to avoid call stack limits
     let binary = '';
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    
+    for (let i = 0; i < bytes.length; i += CHUNK_SIZE) {
+      const chunk = bytes.subarray(i, i + CHUNK_SIZE);
+      binary += String.fromCharCode.apply(null, chunk);
     }
+    
     return btoa(binary);
+  }
+
+  // Helper function to detect if content is binary
+  isBinaryContent(content) {
+    if (typeof content === 'string') {
+      return false;
+    }
+    
+    // Check for binary file extensions
+    const binaryExtensions = [
+      '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.svg',
+      '.woff', '.woff2', '.ttf', '.eot', '.otf',
+      '.pdf', '.zip', '.tar', '.gz', '.rar',
+      '.mp3', '.mp4', '.avi', '.mov', '.wav',
+      '.exe', '.dll', '.so', '.dylib'
+    ];
+    
+    // If it's a Uint8Array, check for null bytes (common in binary files)
+    if (content instanceof Uint8Array) {
+      // Check first 1024 bytes for null bytes
+      const checkLength = Math.min(1024, content.length);
+      for (let i = 0; i < checkLength; i++) {
+        if (content[i] === 0) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
+  }
+
+  // Helper function to safely convert Uint8Array to string
+  uint8ArrayToString(uint8Array) {
+    try {
+      // Try UTF-8 decoding first
+      return new TextDecoder('utf-8', { fatal: true }).decode(uint8Array);
+    } catch (error) {
+      // If UTF-8 fails, it's likely binary - return null to indicate binary content
+      return null;
+    }
   }
 
   async makeRequest(endpoint, options = {}) {
@@ -187,13 +233,7 @@ class GitHubService {
             path: file.path,
             mode: '100644',
             type: 'blob',
-            ...(typeof file.content === 'string' 
-              ? { content: file.content }
-              : { 
-                  content: this.arrayBufferToBase64(file.content),
-                  encoding: 'base64'
-                }
-            )
+            ...this.prepareFileContent(file)
           }));
       } else {
         // Get existing tree to preserve files not being deleted
@@ -217,13 +257,7 @@ class GitHubService {
             path: file.path,
             mode: '100644',
             type: 'blob',
-            ...(typeof file.content === 'string' 
-              ? { content: file.content }
-              : { 
-                  content: this.arrayBufferToBase64(file.content),
-                  encoding: 'base64'
-                }
-            )
+            ...this.prepareFileContent(file)
           }));
 
         // Combine preserved and new files, with new files taking precedence
@@ -286,6 +320,45 @@ class GitHubService {
       console.error('Failed to upload files:', error);
       throw new Error(`Failed to upload files: ${error.message}`);
     }
+  }
+
+  // Helper function to prepare file content for GitHub API
+  prepareFileContent(file) {
+    // If content is already a string, use it directly
+    if (typeof file.content === 'string') {
+      return { content: file.content };
+    }
+    
+    // If content is Uint8Array, determine if it's text or binary
+    if (file.content instanceof Uint8Array) {
+      // Try to detect if it's binary
+      if (this.isBinaryContent(file.content)) {
+        // Binary file - encode as base64
+        return {
+          content: this.arrayBufferToBase64(file.content),
+          encoding: 'base64'
+        };
+      } else {
+        // Try to convert to string
+        const textContent = this.uint8ArrayToString(file.content);
+        if (textContent !== null) {
+          // Successfully converted to text
+          return { content: textContent };
+        } else {
+          // Conversion failed, treat as binary
+          return {
+            content: this.arrayBufferToBase64(file.content),
+            encoding: 'base64'
+          };
+        }
+      }
+    }
+    
+    // Fallback - treat as binary
+    return {
+      content: this.arrayBufferToBase64(file.content),
+      encoding: 'base64'
+    };
   }
 }
 
