@@ -758,6 +758,14 @@ class ExtensionApp {
     }
   }
 
+  isBinaryImage(filePath) {
+    const binaryImageExtensions = [
+      '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.ico', '.tiff', '.tif'
+    ];
+    const extension = filePath.toLowerCase().substring(filePath.lastIndexOf('.'));
+    return binaryImageExtensions.includes(extension);
+  }
+
   async compareFiles(existingTree) {
     console.log('Starting compareFiles with', existingTree.length, 'existing files');
     const existingFiles = new Map();
@@ -815,6 +823,13 @@ class ExtensionApp {
         const existingFile = existingFiles.get(path);
         console.log(`Comparing existing file ${path}...`);
         try {
+          // Skip content comparison for binary images - treat as unchanged if they exist
+          if (this.isBinaryImage(path)) {
+            console.log(`File ${path} is a binary image, skipping content comparison and marking as unchanged`);
+            changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
+            continue;
+          }
+
           console.log(`Fetching content for ${path} (sha: ${existingFile.sha})`);
           const existingContentResponse = await this.sendMessage({
             action: 'getBlobContent',
