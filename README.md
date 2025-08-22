@@ -1,4 +1,4 @@
-# GitHub Bridge Extension
+# GitHub Bridge Extension.
 
 A Chrome extension that enables seamless upload of Bolt.new projects directly to GitHub repositories. Bridge the gap between rapid prototyping in Bolt.new and professional version control with GitHub.
 
