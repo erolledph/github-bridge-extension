@@ -873,6 +873,32 @@ label {
   box-shadow: none;
 }
 
+/* Ensure consistent styling for create branch form buttons */
+.create-branch-form .form-actions .btn-secondary,
+.create-branch-form .form-actions .btn-primary {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 48px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  margin: 0;
+  padding: var(--space-4) var(--space-5);
+}
+
+/* Remove any extra margin from primary button in create branch form */
+.create-branch-form .form-actions .btn-primary {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
 /* Repository List */
 .repo-list {
   flex: 1;
