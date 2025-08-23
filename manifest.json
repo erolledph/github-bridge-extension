@@ -4,7 +4,6 @@
   "version": "1.0.0",
   "description": "Upload Bolt.new projects directly to GitHub repositories",
   "permissions": [
-    "identity",
     "storage",
     "activeTab"
   ],
