@@ -80,6 +80,52 @@ class GitHubService {
     }
   }
 
+  async createBranch(owner, repo, newBranchName, sourceBranchSha) {
+    try {
+      // Validate branch name
+      if (!newBranchName || newBranchName.trim() === '') {
+        throw new Error('Branch name cannot be empty');
+      }
+
+      // Clean branch name (remove invalid characters)
+      const cleanBranchName = newBranchName.trim().replace(/[^a-zA-Z0-9\-_\/\.]/g, '-');
+      
+      if (cleanBranchName !== newBranchName.trim()) {
+        console.warn(`Branch name cleaned from "${newBranchName}" to "${cleanBranchName}"`);
+      }
+
+      const branch = await this.makeRequest(`/repos/${owner}/${repo}/git/refs`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ref: `refs/heads/${cleanBranchName}`,
+          sha: sourceBranchSha
+        })
+      });
+      
+      return {
+        name: cleanBranchName,
+        ref: branch.ref,
+        sha: branch.object.sha
+      };
+    } catch (error) {
+      console.error('Failed to create branch:', error);
+      
+      // Handle specific GitHub API errors
+      if (error.message.includes('422')) {
+        throw new Error('Branch already exists or invalid branch name');
+      } else if (error.message.includes('404')) {
+        throw new Error('Repository not found or insufficient permissions');
+      } else if (error.message.includes('403')) {
+        throw new Error('Insufficient permissions to create branch');
+      }
+      
+      throw new Error(`Failed to create branch: ${error.message}`);
+    }
+  }
+
   async getBranchDetails(owner, repo, branch) {
     try {
       const branchData = await this.makeRequest(`/repos/${owner}/${repo}/branches/${branch}`);
@@ -362,6 +408,22 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       createService.createRepository(request.name, request.description, request.isPrivate)
         .then(repository => {
           sendResponse({ success: true, repository });
+        })
+        .catch(error => {
+          sendResponse({ success: false, error: error.message });
+        });
+      return true;
+
+    case 'createBranch':
+      if (!request.token || !request.owner || !request.repo || !request.newBranchName || !request.sourceBranchSha) {
+        sendResponse({ success: false, error: 'Missing required parameters' });
+        return;
+      }
+
+      const branchCreateService = new GitHubService(request.token);
+      branchCreateService.createBranch(request.owner, request.repo, request.newBranchName, request.sourceBranchSha)
+        .then(branch => {
+          sendResponse({ success: true, branch });
         })
         .catch(error => {
           sendResponse({ success: false, error: error.message });

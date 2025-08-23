@@ -167,6 +167,16 @@ class ExtensionApp {
     const refreshChangesBtn = document.getElementById('refresh-changes-btn');
     if (refreshChangesBtn) refreshChangesBtn.addEventListener('click', () => this.refreshFileChanges());
 
+    // Branch creation
+    const createBranchBtn = document.getElementById('create-branch-btn');
+    if (createBranchBtn) createBranchBtn.addEventListener('click', () => this.toggleCreateBranchForm());
+
+    const cancelCreateBranchBtn = document.getElementById('cancel-create-branch-btn');
+    if (cancelCreateBranchBtn) cancelCreateBranchBtn.addEventListener('click', () => this.toggleCreateBranchForm());
+
+    const confirmCreateBranchBtn = document.getElementById('confirm-create-branch-btn');
+    if (confirmCreateBranchBtn) confirmCreateBranchBtn.addEventListener('click', () => this.handleCreateNewBranch());
+
     // Success screen
     const viewGithubBtn = document.getElementById('view-github-btn');
     if (viewGithubBtn) viewGithubBtn.addEventListener('click', () => this.viewOnGitHub());
@@ -1233,6 +1243,123 @@ class ExtensionApp {
   toggleClearWarning(show) {
     const warning = document.getElementById('clear-warning');
     warning.classList.toggle('hidden', !show);
+  }
+
+  toggleCreateBranchForm() {
+    const form = document.getElementById('create-branch-form');
+    const createBranchBtn = document.getElementById('create-branch-btn');
+    const branchSelect = document.getElementById('branch-select');
+    const sourceBranchName = document.getElementById('source-branch-name');
+    const newBranchNameInput = document.getElementById('new-branch-name');
+    const errorDiv = document.getElementById('create-branch-error');
+    
+    form.classList.toggle('hidden');
+    
+    if (!form.classList.contains('hidden')) {
+      // Show form - populate source branch and focus input
+      const selectedBranch = branchSelect.value || this.selectedRepository.default_branch;
+      sourceBranchName.textContent = selectedBranch;
+      newBranchNameInput.focus();
+      createBranchBtn.disabled = true;
+    } else {
+      // Hide form - reset and enable button
+      newBranchNameInput.value = '';
+      errorDiv.classList.add('hidden');
+      errorDiv.textContent = '';
+      createBranchBtn.disabled = false;
+    }
+  }
+
+  async handleCreateNewBranch() {
+    const newBranchNameInput = document.getElementById('new-branch-name');
+    const confirmCreateBranchBtn = document.getElementById('confirm-create-branch-btn');
+    const errorDiv = document.getElementById('create-branch-error');
+    const branchSelect = document.getElementById('branch-select');
+    
+    const newBranchName = newBranchNameInput.value.trim();
+    
+    if (!newBranchName) {
+      this.showError('create-branch-error', 'Branch name is required');
+      newBranchNameInput.focus();
+      return;
+    }
+    
+    // Validate branch name format
+    const invalidChars = /[^a-zA-Z0-9\-_\/\.]/;
+    if (invalidChars.test(newBranchName)) {
+      this.showError('create-branch-error', 'Branch name contains invalid characters. Use only letters, numbers, hyphens, underscores, slashes, and dots.');
+      newBranchNameInput.focus();
+      return;
+    }
+    
+    // Check if branch name already exists
+    const existingOptions = Array.from(branchSelect.options).map(option => option.value);
+    if (existingOptions.includes(newBranchName)) {
+      this.showError('create-branch-error', 'A branch with this name already exists');
+      newBranchNameInput.focus();
+      return;
+    }
+    
+    confirmCreateBranchBtn.disabled = true;
+    confirmCreateBranchBtn.innerHTML = `
+      <div class="spinner-small"></div>
+      Creating...
+    `;
+    errorDiv.classList.add('hidden');
+    
+    try {
+      // Get the source branch details to get its SHA
+      const sourceBranch = branchSelect.value || this.selectedRepository.default_branch;
+      
+      const branchDetailsResponse = await this.sendMessage({
+        action: 'getBranchDetails',
+        token: this.githubToken,
+        owner: this.selectedRepository.owner.login,
+        repo: this.selectedRepository.name,
+        branch: sourceBranch
+      });
+      
+      if (!branchDetailsResponse.success) {
+        throw new Error(branchDetailsResponse.error || 'Failed to get source branch details');
+      }
+      
+      const sourceBranchSha = branchDetailsResponse.branchDetails.commit.sha;
+      
+      // Create the new branch
+      const createBranchResponse = await this.sendMessage({
+        action: 'createBranch',
+        token: this.githubToken,
+        owner: this.selectedRepository.owner.login,
+        repo: this.selectedRepository.name,
+        newBranchName: newBranchName,
+        sourceBranchSha: sourceBranchSha
+      });
+      
+      if (createBranchResponse.success) {
+        // Add the new branch to the dropdown and select it
+        const newOption = document.createElement('option');
+        newOption.value = createBranchResponse.branch.name;
+        newOption.textContent = createBranchResponse.branch.name;
+        newOption.selected = true;
+        branchSelect.appendChild(newOption);
+        
+        // Hide the form
+        this.toggleCreateBranchForm();
+        
+        // Re-analyze file changes for the new branch
+        await this.analyzeFileChanges();
+        
+      } else {
+        throw new Error(createBranchResponse.error || 'Failed to create branch');
+      }
+      
+    } catch (error) {
+      console.error('Error creating branch:', error);
+      this.showError('create-branch-error', error.message);
+    } finally {
+      confirmCreateBranchBtn.disabled = false;
+      confirmCreateBranchBtn.innerHTML = 'Create Branch';
+    }
   }
 
   async pushToRepository() {

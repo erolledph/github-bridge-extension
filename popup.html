@@ -220,9 +220,18 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="branch-select">Target Branch</label>
-                        <select id="branch-select">
-                            <option value="">Loading branches...</option>
-                        </select>
+                        <div class="branch-select-container">
+                            <select id="branch-select">
+                                <option value="">Loading branches...</option>
+                            </select>
+                            <button id="create-branch-btn" class="btn-create-branch" type="button" title="Create new branch">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 5v14" />
+                                    <path d="M5 12h14" />
+                                </svg>
+                                New Branch
+                            </button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label class="checkbox-label">
@@ -231,6 +240,23 @@
                             Clear existing files
                         </label>
                     </div>
+                </div>
+
+                <!-- Create Branch Form -->
+                <div id="create-branch-form" class="create-branch-form hidden">
+                    <h3>Create New Branch</h3>
+                    <div class="form-group">
+                        <label for="new-branch-name">Branch Name *</label>
+                        <input type="text" id="new-branch-name" placeholder="feature/my-new-feature" required>
+                        <small class="branch-hint">
+                            Branch will be created from: <span id="source-branch-name">main</span>
+                        </small>
+                    </div>
+                    <div class="form-actions">
+                        <button id="cancel-create-branch-btn" class="btn-secondary">Cancel</button>
+                        <button id="confirm-create-branch-btn" class="btn-primary">Create Branch</button>
+                    </div>
+                    <div id="create-branch-error" class="error-message hidden"></div>
                 </div>
 
                 <!-- File Changes Summary -->

@@ -580,6 +580,110 @@ label {
   margin-bottom: var(--space-4);
 }
 
+/* Branch Select Container */
+.branch-select-container {
+  display: flex;
+  gap: var(--space-2);
+  align-items: stretch;
+}
+
+.branch-select-container select {
+  flex: 1;
+}
+
+.btn-create-branch {
+  background: var(--color-background);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-height: 48px;
+}
+
+.btn-create-branch:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: var(--color-background);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.btn-create-branch:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-create-branch:disabled {
+  background: var(--color-background-tertiary);
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-create-branch svg {
+  flex-shrink: 0;
+}
+
+/* Create Branch Form */
+.create-branch-form {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-lg);
+  margin-bottom: var(--space-4);
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.create-branch-form h3 {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-primary);
+}
+
+.branch-hint {
+  display: block;
+  margin-top: var(--space-1);
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-muted);
+}
+
+.branch-hint span {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-primary);
+  font-family: var(--font-family-mono);
+}
+
+.create-branch-form .form-group {
+  margin-bottom: var(--space-4);
+}
+
+.create-branch-form .form-actions {
+  margin-top: var(--space-5);
+}
+
 .form-group {
   margin-bottom: var(--space-4);
 }
@@ -717,7 +821,6 @@ label {
   transition: all var(--transition-fast);
   box-shadow: var(--shadow-md);
   white-space: nowrap;
-  width: 100%;
   margin: 0;
   padding: var(--space-4) var(--space-5);
 }
