@@ -14,22 +14,17 @@ class ExtensionApp {
   async init() {
     console.log('Initializing GitHub Bridge Extension');
     
-    // Add debugging for initial state
     console.log('Current screen on init:', this.currentScreen);
     console.log('Auth screen element:', document.getElementById('auth-screen'));
     
-    // Set up event listeners
     this.setupEventListeners();
     
-    // Check for stored token
     await this.checkStoredToken();
   }
 
-  // Function to reset upload state for clean operations
   resetUploadState() {
     console.log('Resetting upload state...');
     
-    // Reset file upload elements
     const fileInput = document.getElementById('file-input');
     const filePreview = document.getElementById('file-preview');
     const fileInfo = document.getElementById('file-info');
@@ -40,11 +35,9 @@ class ExtensionApp {
     if (fileInfo) fileInfo.innerHTML = '';
     if (fileList) fileList.innerHTML = '';
     
-    // Reset commit message
     const commitMessage = document.getElementById('commit-message');
     if (commitMessage) commitMessage.value = '';
     
-    // Reset progress bar
     const uploadProgress = document.getElementById('upload-progress');
     const progressFill = document.getElementById('progress-fill');
     const progressPercent = document.getElementById('progress-percent');
@@ -53,7 +46,6 @@ class ExtensionApp {
     if (progressFill) progressFill.style.width = '0%';
     if (progressPercent) progressPercent.textContent = '0%';
     
-    // Reset file changes
     const noChangesMessage = document.getElementById('no-changes-message');
     const fileChangesList = document.getElementById('file-changes-list');
     
@@ -67,11 +59,9 @@ class ExtensionApp {
       `;
     }
     
-    // Reset checkboxes
     const clearExisting = document.getElementById('clear-existing');
     if (clearExisting) clearExisting.checked = false;
     
-    // Hide all error messages
     const errorElements = [
       'auth-error',
       'create-error', 
@@ -87,18 +77,15 @@ class ExtensionApp {
       }
     });
     
-    // Hide warning messages
     const clearWarning = document.getElementById('clear-warning');
     if (clearWarning) clearWarning.classList.add('hidden');
     
-    // Reset global variables
     this.uploadedFile = null;
     this.extractedFiles = [];
     this.fileChangesSummary = null;
     this.filesToPush = [];
     this.filesToDelete = [];
     
-    // Ensure the drop zone is visible and re-initialized
     try {
       this.resetDropZone();
     } catch (e) {
@@ -118,7 +105,6 @@ class ExtensionApp {
     const manualAuthBtn = document.getElementById('manual-auth-button');
     if (manualAuthBtn) manualAuthBtn.addEventListener('click', () => this.authenticateWithManualToken());
 
-    // Manual token toggle buttons
     const showManualBtn = document.getElementById('show-manual-token-btn');
     if (showManualBtn) {
       showManualBtn.addEventListener('click', () => {
@@ -155,11 +141,12 @@ class ExtensionApp {
     const uploadBackBtn = document.getElementById('upload-back-btn');
     if (uploadBackBtn) uploadBackBtn.addEventListener('click', () => this.showScreen('repo'));
 
-    const browseBtn = document.getElementById('browse-btn');
-    if (browseBtn) browseBtn.addEventListener('click', () => document.getElementById('file-input').click());
-
     const fileInput = document.getElementById('file-input');
-    if (fileInput) fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+      // Ensure file input is enabled
+      fileInput.disabled = false;
+    }
 
     const continueUploadBtn = document.getElementById('continue-upload-btn');
     if (continueUploadBtn) continueUploadBtn.addEventListener('click', () => this.showScreen('commit'));
@@ -177,7 +164,6 @@ class ExtensionApp {
     const pushBtn = document.getElementById('push-btn');
     if (pushBtn) pushBtn.addEventListener('click', () => this.pushToRepository());
 
-    // Refresh changes button
     const refreshChangesBtn = document.getElementById('refresh-changes-btn');
     if (refreshChangesBtn) refreshChangesBtn.addEventListener('click', () => this.refreshFileChanges());
 
@@ -192,11 +178,9 @@ class ExtensionApp {
       this.loadRepositories();
     });
 
-    // External link in footer
     const externalLink = document.getElementById('external-link');
     if (externalLink) externalLink.addEventListener('click', (e) => this.handleExternalLink(e));
 
-    // Drop zone
     const dropZone = document.getElementById('drop-zone');
     if (dropZone) {
       dropZone.addEventListener('dragover', (e) => this.handleDragOver(e));
@@ -215,7 +199,6 @@ class ExtensionApp {
         console.log('Found stored token, validating...');
         this.githubToken = response.token;
         
-        // Validate the stored token
         const validation = await this.sendMessage({ 
           action: 'validateToken', 
           token: this.githubToken 
@@ -262,17 +245,14 @@ class ExtensionApp {
       return;
     }
     
-    // Toggle visibility of both sections
     authOptions.classList.toggle('hidden');
     manualTokenSection.classList.toggle('hidden');
     
     console.log('Auth options hidden:', authOptions.classList.contains('hidden'));
     console.log('Manual token section hidden:', manualTokenSection.classList.contains('hidden'));
     
-    // Clear any existing errors
     errorDiv.classList.add('hidden');
     
-    // If showing manual token section, focus on the input
     if (!manualTokenSection.classList.contains('hidden')) {
       const tokenInput = document.getElementById('manual-token');
       if (tokenInput) {
@@ -282,7 +262,6 @@ class ExtensionApp {
         }, 100);
       }
     } else {
-      // Clear the token input when going back
       const tokenInput = document.getElementById('manual-token');
       if (tokenInput) {
         tokenInput.value = '';
@@ -372,7 +351,6 @@ class ExtensionApp {
       
       if (validation.success && validation.validation.valid) {
         console.log('Manual token is valid, storing and proceeding');
-        // Store the token
         await this.sendMessage({ 
           action: 'storeToken', 
           token: token 
@@ -393,9 +371,9 @@ class ExtensionApp {
       authButton.disabled = false;
       authButton.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <circle cx="12" cy="7" r="4"/>
-                        </svg>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
         Authenticate
       `;
     }
@@ -431,7 +409,6 @@ class ExtensionApp {
         </div>
       `;
       
-      // Attach event listener to retry button
       const retryButton = document.getElementById('retry-load-repos');
       if (retryButton) {
         retryButton.addEventListener('click', () => this.loadRepositories());
@@ -468,7 +445,6 @@ class ExtensionApp {
       </div>
     `).join('');
     
-    // Add click listeners
     document.querySelectorAll('.repo-item').forEach(item => {
       item.addEventListener('click', () => {
         const repoId = parseInt(item.dataset.repoId);
@@ -496,7 +472,6 @@ class ExtensionApp {
     if (!form.classList.contains('hidden')) {
       document.getElementById('repo-name').focus();
     } else {
-      // Clear form
       document.getElementById('repo-name').value = '';
       document.getElementById('repo-description').value = '';
       document.getElementById('repo-private').checked = false;
@@ -605,7 +580,6 @@ class ExtensionApp {
       const extractedFiles = [];
       const allPaths = Object.keys(zipContent.files).filter(path => !zipContent.files[path].dir);
       
-      // Find common root folder
       let commonRoot = '';
       if (allPaths.length > 0) {
         const firstPath = allPaths[0];
@@ -621,7 +595,6 @@ class ExtensionApp {
         }
       }
       
-      // Process each file
       for (const [relativePath, zipEntry] of Object.entries(zipContent.files)) {
         if (!zipEntry.dir) {
           let finalPath = relativePath;
@@ -660,7 +633,6 @@ class ExtensionApp {
     } catch (error) {
       console.error('Error processing file:', error);
       
-      // Log detailed error information for debugging
       console.error('ZIP processing error details:', {
         errorMessage: error.message,
         errorStack: error.stack,
@@ -670,7 +642,6 @@ class ExtensionApp {
         fileLastModified: new Date(file.lastModified).toISOString()
       });
       
-      // Provide more specific error messages based on the error type
       let errorMessage = 'Failed to process ZIP file. Please ensure it\'s a valid ZIP archive.';
       
       if (error && error.message && typeof error.message === 'string' && error.message.includes('End of central directory not found')) {
@@ -683,7 +654,7 @@ class ExtensionApp {
         errorMessage = 'Unable to read the ZIP file. The file may be corrupted or in an unsupported format.';
       } else if (file.size === 0) {
         errorMessage = 'The uploaded file is empty. Please select a valid ZIP file.';
-      } else if (file.size > 100 * 1024 * 1024) { // 100MB limit
+      } else if (file.size > 100 * 1024 * 1024) {
         errorMessage = 'The ZIP file is too large. Please upload a file smaller than 100MB.';
       }
       
@@ -736,33 +707,29 @@ class ExtensionApp {
     dropZone.classList.remove('hidden');
     dropZone.innerHTML = `
       <div class="drop-content">
+        <input type="file" id="file-input" accept=".zip" style="display: none;">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7,10 12,15 17,10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
         <h3>Drop your ZIP file here</h3>
-        <p>or <button id="browse-btn" class="link-btn">click to browse</button></p>
+        <p>or <label id="browse-btn" for="file-input" class="link-btn" tabindex="0">click to browse</label></p>
         <small>Supports ZIP files exported from Bolt.new</small>
       </div>
     `;
     
-    document.getElementById('file-preview').classList.add('hidden');
-    
-    // Re-attach the browse button event listener
-    const browseBtn = document.getElementById('browse-btn');
-    if (browseBtn) {
-      browseBtn.addEventListener('click', () => {
-        const fileInput = document.getElementById('file-input');
-        if (fileInput) {
-          fileInput.click();
-        }
-      });
+    // Re-attach file input event listener after DOM update
+    const fileInput = document.getElementById('file-input');
+    if (fileInput) {
+      fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
+      fileInput.disabled = false;
     }
+    
+    document.getElementById('file-preview').classList.add('hidden');
   }
 
   async showCommitScreen() {
-    // Show loading state for file changes
     const fileChangesList = document.getElementById('file-changes-list');
     fileChangesList.innerHTML = `
       <div class="loading-changes">
@@ -771,13 +738,11 @@ class ExtensionApp {
       </div>
     `;
 
-    // Reset UI state
     const pushBtn = document.getElementById('push-btn');
     const noChangesMessage = document.getElementById('no-changes-message');
     pushBtn.disabled = false;
     noChangesMessage.classList.add('hidden');
 
-    // Set up repository info
     const repoInfo = document.getElementById('repo-info');
     repoInfo.innerHTML = `
       <div class="selected-repo">
@@ -789,15 +754,12 @@ class ExtensionApp {
       </div>
     `;
     
-    // Set default commit message
     const commitMessage = document.getElementById('commit-message');
     commitMessage.value = `Upload project from Bolt.new: ${this.uploadedFile.name.replace('.zip', '')}`;
     this.updateCharCount(commitMessage.value);
     
-    // Load branches
     await this.loadBranches();
     
-    // Analyze file changes
     await this.analyzeFileChanges();
   }
 
@@ -805,14 +767,12 @@ class ExtensionApp {
     const refreshBtn = document.getElementById('refresh-changes-btn');
     const originalContent = refreshBtn.innerHTML;
     
-    // Disable button and show loading state
     refreshBtn.disabled = true;
     refreshBtn.innerHTML = `
       <div class="spinner-small"></div>
       Refreshing...
     `;
     
-    // Reset file changes list to loading state
     const fileChangesList = document.getElementById('file-changes-list');
     fileChangesList.innerHTML = `
       <div class="loading-changes">
@@ -821,12 +781,10 @@ class ExtensionApp {
       </div>
     `;
     
-    // Hide no changes message
     const noChangesMessage = document.getElementById('no-changes-message');
     noChangesMessage.classList.add('hidden');
     
     try {
-      // Re-run the file analysis
       await this.analyzeFileChanges();
     } catch (error) {
       console.error('Error refreshing file changes:', error);
@@ -837,7 +795,6 @@ class ExtensionApp {
         </div>
       `;
     } finally {
-      // Re-enable button and restore original content
       refreshBtn.disabled = false;
       refreshBtn.innerHTML = originalContent;
     }
@@ -849,7 +806,6 @@ class ExtensionApp {
       const selectedBranch = document.getElementById('branch-select').value || this.selectedRepository.default_branch;
       console.log('Selected branch:', selectedBranch);
       
-      // Get branch details
       console.log('Fetching branch details...');
       const branchResponse = await this.sendMessage({
         action: 'getBranchDetails',
@@ -864,7 +820,6 @@ class ExtensionApp {
         throw new Error(branchResponse.error);
       }
       
-      // Get existing file tree
       console.log('Fetching file tree...');
       const treeResponse = await this.sendMessage({
         action: 'getTree',
@@ -880,12 +835,10 @@ class ExtensionApp {
         throw new Error(treeResponse.error);
       }
       
-      // Compare files
       console.log('Starting file comparison...');
       await this.compareFiles(treeResponse.tree.tree);
       console.log('File comparison completed');
       
-      // Update UI based on analysis results
       this.updateCommitScreenUI();
       
     } catch (error) {
@@ -898,7 +851,6 @@ class ExtensionApp {
         </div>
       `;
       
-      // Ensure push button is enabled if analysis fails
       const pushBtn = document.getElementById('push-btn');
       pushBtn.disabled = false;
     }
@@ -909,7 +861,6 @@ class ExtensionApp {
     const noChangesMessage = document.getElementById('no-changes-message');
     
     if (!this.fileChangesSummary) {
-      // If no file changes summary, enable push button
       pushBtn.disabled = false;
       noChangesMessage.classList.add('hidden');
       return;
@@ -919,11 +870,9 @@ class ExtensionApp {
     const hasChanges = newFiles.length > 0 || modified.length > 0 || deleted.length > 0;
     
     if (!hasChanges) {
-      // No changes detected - disable push button and show message
       pushBtn.disabled = true;
       noChangesMessage.classList.remove('hidden');
     } else {
-      // Changes detected - enable push button and hide message
       pushBtn.disabled = false;
       noChangesMessage.classList.add('hidden');
     }
@@ -942,7 +891,6 @@ class ExtensionApp {
     const existingFiles = new Map();
     const uploadedFiles = new Map();
     
-    // Map existing files (only blobs, not trees)
     existingTree
       .filter(item => item.type === 'blob')
       .forEach(item => {
@@ -950,7 +898,6 @@ class ExtensionApp {
       });
     console.log('Mapped', existingFiles.size, 'existing files');
     
-    // Map uploaded files
     this.uploadedFile.extractedFiles.forEach(file => {
       uploadedFiles.set(file.path, file);
     });
@@ -963,38 +910,32 @@ class ExtensionApp {
       unchanged: []
     };
     
-    // Helper function to normalize line endings and whitespace for comparison
     const normalizeContent = (content) => {
       if (typeof content !== 'string') {
         return content;
       }
-      // Normalize line endings to LF and trim trailing whitespace from each line
       return content
-        .replace(/\r\n/g, '\n')  // Convert CRLF to LF
-        .replace(/\r/g, '\n')    // Convert CR to LF
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
         .split('\n')
-        .map(line => line.trimEnd()) // Remove trailing whitespace from each line
+        .map(line => line.trimEnd())
         .join('\n')
-        .replace(/\n+$/, '') // Remove trailing blank lines
-        .trim(); // Remove leading/trailing whitespace from entire content
+        .replace(/\n+$/, '')
+        .trim();
     };
     
     let processedCount = 0;
-    // Check uploaded files against existing
     for (const [path, uploadedFile] of uploadedFiles) {
       processedCount++;
       console.log(`Processing file ${processedCount}/${uploadedFiles.size}: ${path}`);
       
       if (!existingFiles.has(path)) {
-        // New file
         console.log(`File ${path} is new`);
         changes.new.push({ path, file: uploadedFile, status: 'new' });
       } else {
-        // File exists, check if modified
         const existingFile = existingFiles.get(path);
         console.log(`Comparing existing file ${path}...`);
         try {
-          // Skip content comparison for binary images - treat as unchanged if they exist
           if (this.isBinaryImage(path)) {
             console.log(`File ${path} is a binary image, skipping content comparison and marking as unchanged`);
             changes.unchanged.push({ path, file: uploadedFile, status: 'unchanged' });
@@ -1029,18 +970,15 @@ class ExtensionApp {
               changes.modified.push({ path, file: uploadedFile, status: 'modified' });
             }
           } else {
-            // If we can't fetch content, assume modified
             console.log(`Could not fetch content for ${path}, assuming modified`);
             changes.modified.push({ path, file: uploadedFile, status: 'modified' });
           }
         } catch (error) {
           console.error(`Error comparing file ${path}:`, error);
-          // If comparison fails, assume modified
           changes.modified.push({ path, file: uploadedFile, status: 'modified' });
         }
       }
       
-      // Add a small delay to prevent overwhelming the API and allow UI updates
       if (processedCount % 10 === 0) {
         console.log(`Processed ${processedCount} files, taking a brief pause...`);
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -1048,7 +986,6 @@ class ExtensionApp {
     }
     
     console.log('Checking for deleted files...');
-    // Check for deleted files
     for (const [path, existingFile] of existingFiles) {
       if (!uploadedFiles.has(path)) {
         console.log(`File ${path} will be deleted`);
@@ -1065,14 +1002,12 @@ class ExtensionApp {
     
     this.fileChangesSummary = changes;
     
-    // Initialize selected files (all new, modified, and unchanged selected by default)
     this.filesToPush = [
       ...changes.new.map(item => item.file),
       ...changes.modified.map(item => item.file),
       ...changes.unchanged.map(item => item.file)
     ];
     
-    // Initialize files to delete (none selected by default)
     this.filesToDelete = changes.deleted.map(item => item.path);
     
     console.log('Rendering file changes summary...');
@@ -1106,12 +1041,11 @@ class ExtensionApp {
     
     fileChangesList.innerHTML = categorizedContent;
     
-    // Attach event listeners after DOM elements are created
     this.attachFileChangeListeners();
   }
 
   renderCategory(category) {
-    const { key, label, items, icon } = category;
+    const { key, label, items } = category;
     const sortedItems = items.sort((a, b) => a.path.localeCompare(b.path));
     
     const toggleIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1223,7 +1157,6 @@ class ExtensionApp {
       }
     } else {
       if (isChecked) {
-        // Find the file in the changes and add to filesToPush
         const allFiles = [
           ...this.fileChangesSummary.new,
           ...this.fileChangesSummary.modified,
@@ -1247,7 +1180,6 @@ class ExtensionApp {
   }
 
   attachFileChangeListeners() {
-    // Attach click listeners to category headers
     const categoryHeaders = document.querySelectorAll('.file-category-header');
     categoryHeaders.forEach(header => {
       header.addEventListener('click', (event) => {
@@ -1258,7 +1190,6 @@ class ExtensionApp {
       });
     });
     
-    // Attach change listeners to file checkboxes
     const fileCheckboxes = document.querySelectorAll('.file-change-item input[type="checkbox"]');
     fileCheckboxes.forEach(checkbox => {
       checkbox.addEventListener('change', (event) => {
@@ -1326,8 +1257,6 @@ class ExtensionApp {
     progressDiv.classList.remove('hidden');
     
     try {
-      // When clearing existing files, use all files from the ZIP
-      // Otherwise, use only the selected files for selective update
       const filesToUpload = clearExisting ? this.uploadedFile.extractedFiles : this.filesToPush;
       
       const response = await this.sendMessage({
@@ -1382,12 +1311,10 @@ class ExtensionApp {
   showScreen(screenName) {
     console.log('Showing screen:', screenName);
     
-    // Hide all screens
     document.querySelectorAll('.screen').forEach(screen => {
       screen.classList.add('hidden');
     });
     
-    // Show target screen
     const targetScreen = document.getElementById(`${screenName}-screen`);
     if (targetScreen) {
       targetScreen.classList.remove('hidden');
@@ -1398,7 +1325,6 @@ class ExtensionApp {
     
     this.currentScreen = screenName;
     
-    // If navigating to the upload screen, ensure drop zone is reset/visible
     if (screenName === 'upload') {
       try {
         this.resetDropZone();
@@ -1407,7 +1333,6 @@ class ExtensionApp {
       }
     }
     
-    // Special handling for certain screens
     if (screenName === 'commit') {
       this.showCommitScreen();
     } else if (screenName === 'success') {
@@ -1447,7 +1372,6 @@ class ExtensionApp {
   }
 }
 
-// Listen for progress updates from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'uploadProgress') {
     const progressFill = document.getElementById('progress-fill');
@@ -1460,19 +1384,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Initialize the app after DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
   const app = new ExtensionApp();
-  
-  // Make app globally available for event handlers that need it
   window.app = app;
 });
 
-// Fallback initialization if DOMContentLoaded has already fired
 if (document.readyState === 'loading') {
-  // DOM is still loading, wait for DOMContentLoaded
 } else {
-  // DOM is already loaded, initialize immediately
   const app = new ExtensionApp();
   window.app = app;
 }
