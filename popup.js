@@ -25,6 +25,82 @@ class ExtensionApp {
     await this.checkStoredToken();
   }
 
+  // Function to reset upload state for clean operations
+  resetUploadState() {
+    console.log('Resetting upload state...');
+    
+    // Reset file upload elements
+    const fileInput = document.getElementById('file-input');
+    const filePreview = document.getElementById('file-preview');
+    const fileInfo = document.getElementById('file-info');
+    const fileList = document.getElementById('file-list');
+    
+    if (fileInput) fileInput.value = '';
+    if (filePreview) filePreview.classList.add('hidden');
+    if (fileInfo) fileInfo.innerHTML = '';
+    if (fileList) fileList.innerHTML = '';
+    
+    // Reset commit message
+    const commitMessage = document.getElementById('commit-message');
+    if (commitMessage) commitMessage.value = '';
+    
+    // Reset progress bar
+    const uploadProgress = document.getElementById('upload-progress');
+    const progressFill = document.getElementById('progress-fill');
+    const progressPercent = document.getElementById('progress-percent');
+    
+    if (uploadProgress) uploadProgress.classList.add('hidden');
+    if (progressFill) progressFill.style.width = '0%';
+    if (progressPercent) progressPercent.textContent = '0%';
+    
+    // Reset file changes
+    const noChangesMessage = document.getElementById('no-changes-message');
+    const fileChangesList = document.getElementById('file-changes-list');
+    
+    if (noChangesMessage) noChangesMessage.classList.add('hidden');
+    if (fileChangesList) {
+      fileChangesList.innerHTML = `
+        <div class="loading-changes">
+          <div class="spinner"></div>
+          <p>Analyzing file changes...</p>
+        </div>
+      `;
+    }
+    
+    // Reset checkboxes
+    const clearExisting = document.getElementById('clear-existing');
+    if (clearExisting) clearExisting.checked = false;
+    
+    // Hide all error messages
+    const errorElements = [
+      'auth-error',
+      'create-error', 
+      'upload-error',
+      'commit-error'
+    ];
+    
+    errorElements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.classList.add('hidden');
+        element.textContent = '';
+      }
+    });
+    
+    // Hide warning messages
+    const clearWarning = document.getElementById('clear-warning');
+    if (clearWarning) clearWarning.classList.add('hidden');
+    
+    // Reset global variables
+    this.uploadedFile = null;
+    this.extractedFiles = [];
+    this.fileChangesSummary = null;
+    this.filesToPush = [];
+    this.filesToDelete = [];
+    
+    console.log('Upload state reset completed');
+  }
+
   setupEventListeners() {
     console.log('Setting up event listeners');
 
@@ -103,7 +179,11 @@ class ExtensionApp {
     if (viewGithubBtn) viewGithubBtn.addEventListener('click', () => this.viewOnGitHub());
 
     const startOverBtn = document.getElementById('start-over-btn');
-    if (startOverBtn) startOverBtn.addEventListener('click', () => this.startOver());
+    if (startOverBtn) startOverBtn.addEventListener('click', () => {
+      this.resetUploadState();
+      this.showScreen('repo');
+      this.loadRepositories();
+    });
 
     // External link in footer
     const externalLink = document.getElementById('external-link');

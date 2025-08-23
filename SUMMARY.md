@@ -1,4 +1,4 @@
-# GitHub Bridge Extension - Project Summary
+# GitHub Bridge Extension - Project Summary..
 
 ## Overview
 
