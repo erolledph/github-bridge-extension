@@ -1,4 +1,4 @@
-# GitHub Bridge Extension.
+# GitHub Bridge Extension
 
 A Chrome extension that enables seamless upload of Bolt.new projects directly to GitHub repositories. Bridge the gap between rapid prototyping in Bolt.new and professional version control with GitHub.
 
@@ -13,8 +13,8 @@ Authenticate securely using GitHub Personal Access Tokens with proper scope vali
 ### 📁 **Smart File Management**
 - Intelligent change detection between local and remote files
 - Selective upload of only modified, new, or deleted files
-- File categorization and preview before upload
-- Support for clearing existing repository contents
+- File categorization and preview before upload.
+- Support for clearing existing repository contents.
 
 ### 🌿 **Branch Management**
 - Select target branch for uploads
