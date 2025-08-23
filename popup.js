@@ -98,6 +98,13 @@ class ExtensionApp {
     this.filesToPush = [];
     this.filesToDelete = [];
     
+    // Ensure the drop zone is visible and re-initialized
+    try {
+      this.resetDropZone();
+    } catch (e) {
+      console.warn('Could not reset drop zone:', e);
+    }
+    
     console.log('Upload state reset completed');
   }
 
@@ -1390,6 +1397,15 @@ class ExtensionApp {
     }
     
     this.currentScreen = screenName;
+    
+    // If navigating to the upload screen, ensure drop zone is reset/visible
+    if (screenName === 'upload') {
+      try {
+        this.resetDropZone();
+      } catch (e) {
+        console.warn('Could not reset drop zone on showScreen:', e);
+      }
+    }
     
     // Special handling for certain screens
     if (screenName === 'commit') {
