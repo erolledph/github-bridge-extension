@@ -378,19 +378,14 @@ label {
 .auth-icon {
   width: var(--space-20);
   height: var(--space-20);
-  border-radius: var(--radius-2xl);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-primary);
   transition: all var(--transition-normal);
-  background: var(--color-primary-light);
-  box-shadow: var(--shadow-lg);
 }
 
 .auth-icon:hover {
   transform: scale(1.02);
-  box-shadow: var(--shadow-xl);
 }
 
 .auth-content h2 {
